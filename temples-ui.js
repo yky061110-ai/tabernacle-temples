@@ -122,6 +122,8 @@ $('#t3left').addEventListener('click',()=>{ if(!T3D) return; if(state.mode[state
 $('#t3right').addEventListener('click',()=>{ if(!T3D) return; if(state.mode[state.tab]==='fp') T3D.lookTurn(-Math.PI/4); else T3D.spin(Math.PI/4); });
 $('#t3home').addEventListener('click',()=>{ if(!T3D) return; if(state.mode[state.tab]==='fp'){ setMode('orbit'); } else T3D.orbitReset(); });
 $('#t3full').addEventListener('click',()=>toggleFull());
+$('#t3zin').addEventListener('click',()=>{ if(T3D) T3D.zoomStep(.75); });
+$('#t3zout').addEventListener('click',()=>{ if(T3D) T3D.zoomStep(1/.75); });
 function toggleFull(on){ const f=on??!stage.classList.contains('full'); stage.classList.toggle('full',f); document.body.classList.toggle('tfull',f);
   $('#t3full').textContent=f?'✕':'⛶'; $('#t3full').title=f?'작게 보기':'크게 보기'; setTimeout(()=>{ T3D&&T3D.resize(); },60); }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&stage.classList.contains('full')&&!overlay.classList.contains('on')) toggleFull(false); });
@@ -151,10 +153,11 @@ function planSVG(t,b,opt={}){
   const R=r=>({x:B[3]-r[3],y:r[0]-B[0],w:r[3]-r[2],h:r[1]-r[0]});
   const X=p=>[B[3]-p[1],p[0]-B[0]];
   const kattr=(e)=>e.k?` class="pk" data-k="${e.k}"${e.fp?' data-fp="1"':''}`:'';
-  let s=`<svg xmlns="${NS}" class="plansvg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
+  const cs=Math.min(W,H)*.045, EX=opt.noCompass?0:cs*3.6;
+  let s=`<svg xmlns="${NS}" class="plansvg" viewBox="0 0 ${W} ${H+EX}" preserveAspectRatio="xMidYMid meet">
     <defs><pattern id="hatch-${t}" width="${4*u}" height="${4*u}" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="${4*u}" stroke="#b7a684" stroke-width="${.6*u}"/></pattern>
     <radialGradient id="glw-${t}"><stop offset="0" stop-color="#ffe9a8" stop-opacity=".95"/><stop offset="1" stop-color="#ffe9a8" stop-opacity="0"/></radialGradient></defs>
-    <rect x="0" y="0" width="${W}" height="${H}" fill="#efe7d6"/>`;
+    <rect x="0" y="0" width="${W}" height="${H+EX}" fill="#efe7d6"/>`;
   const body=[], top=[];
   P.els.forEach(e=>{
     if(e.t==='a'){ const q=R(e.r); body.push(`<rect${kattr(e)} x="${q.x}" y="${q.y}" width="${q.w}" height="${q.h}" fill="${e.f||'#f3eee2'}" stroke="#8a7c66" stroke-width="${.6*u}"${e.dash?` stroke-dasharray="${3*u} ${2*u}"`:''}/>`);
@@ -188,11 +191,11 @@ function planSVG(t,b,opt={}){
       const sq=G(-n*1.1,0,-6,6); g+=box(sq,'#e3d9c4',.3*u);
       body.push(g+'</g>'); }
     else if(e.t==='n'){ const [x,y]=X(e.p), sz=fs*(e.s||1);
-      if(/^\d+$/.test(e.c)) top.push(`<g class="pk code" data-k="${e.k}"><circle cx="${x}" cy="${y}" r="${sz*.72}" fill="#fffaf0" stroke="#2a241d" stroke-width="${.35*u*(e.s||1)}"/><text x="${x}" y="${y+sz*.34}" text-anchor="middle" font-size="${sz*(e.c.length>1?.82:.95)}" font-weight="700" fill="#2a241d">${e.c}</text></g>`);
+      if(/^\d+$/.test(e.c)) top.push(`<g class="pk code" data-k="${e.k}"><circle cx="${x}" cy="${y}" r="${sz*.8}" fill="#ffffff" stroke="#000" stroke-width="${.45*u*(e.s||1)}"/><text x="${x}" y="${y+sz*.36}" text-anchor="middle" font-size="${sz*(e.c.length>1?.9:1.05)}" font-weight="800" fill="#000" letter-spacing="${e.c.length>1?-.04*sz:0}">${e.c}</text></g>`);
       else top.push(`<text class="pk code" data-k="${e.k}" x="${x}" y="${y+sz*.35}" text-anchor="middle" font-size="${sz}" font-weight="700" fill="#2a241d" stroke="#efe7d6" stroke-width="${sz*.22}" paint-order="stroke">${esc(e.c)}</text>`); }
   });
   s+=body.join('')+top.join('');
-  if(!opt.noCompass){ const cs=Math.min(W,H)*.075, cx=W-cs*1.6, cy=H-cs*1.7;
+  if(!opt.noCompass){ const cx=cs*2.2, cy=H+EX/2+cs*.1;
     s+=`<g pointer-events="none" font-size="${cs*.42}" font-weight="700" fill="#6d6252" text-anchor="middle">
       <line x1="${cx}" y1="${cy-cs}" x2="${cx}" y2="${cy+cs}" stroke="#6d6252" stroke-width="${cs*.05}"/><line x1="${cx-cs}" y1="${cy}" x2="${cx+cs}" y2="${cy}" stroke="#6d6252" stroke-width="${cs*.05}"/>
       <text x="${cx}" y="${cy-cs*1.12}">서</text><text x="${cx}" y="${cy+cs*1.5}">동</text><text x="${cx+cs*1.35}" y="${cy+cs*.15}">북</text><text x="${cx-cs*1.35}" y="${cy+cs*.15}">남</text></g>`; }
@@ -201,7 +204,7 @@ function planSVG(t,b,opt={}){
 function renderPlan(t){
   tplan.querySelector('.planwrap').innerHTML=planSVG(t);
   const svg=tplan.querySelector('svg'); const P=TEMPLES[t].plan, B=P.b;
-  const full={x:0,y:0,w:B[3]-B[2],h:B[1]-B[0]}; let vb={...full}; state.vb[t]=vb;
+  const v0=svg.viewBox.baseVal, full={x:0,y:0,w:v0.width,h:v0.height}; let vb={...full}; state.vb[t]=vb;
   const apply=()=>svg.setAttribute('viewBox',`${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
   const toSvg=(cx,cy)=>{ const p=svg.createSVGPoint(); p.x=cx; p.y=cy; return p.matrixTransform(svg.getScreenCTM().inverse()); };
   const zoom=(f,cx,cy)=>{ const p=toSvg(cx,cy); const nw=Math.max(full.w*.08,Math.min(full.w*1.05,vb.w*f)), k=nw/vb.w;

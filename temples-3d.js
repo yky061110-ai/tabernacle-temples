@@ -799,7 +799,7 @@ function buildRec(tid){
   const sky=new THREE.Mesh(new THREE.SphereGeometry(4000,32,16),skyMaterial()); sky.renderOrder=-1; sky.frustumCulled=false; scene.add(sky);
   const hemi=new THREE.HemisphereLight(0xdbe7f5,0x8c6d4a,1.15); scene.add(hemi);
   const sun=new THREE.DirectionalLight(0xffe2b8,2.9); sun.castShadow=true; sun.shadow.mapSize.set(2048,2048);
-  sun.shadow.bias=-.0005; sun.shadow.normalBias=.5; scene.add(sun); scene.add(sun.target);
+  sun.shadow.bias=-.0004; sun.shadow.normalBias=.18; scene.add(sun); scene.add(sun.target);
   if(envTex){ scene.environment=envTex; scene.environmentIntensity=.75; }
   const B=new Bld(), R=RNG(tid.length*977+13), FX=new Effects(root);
   const ctx={B,R,FX,root,extraPick:[]};
@@ -818,7 +818,7 @@ function makeLabels(rec){
     labelLayer.appendChild(b); L.el=b; L.w=0; });
 }
 function fitShadow(c,half){ const cam=st.rec.sun.shadow.camera; cam.left=-half; cam.right=half; cam.top=half; cam.bottom=-half; cam.near=10; cam.far=2400; cam.updateProjectionMatrix();
-  st.rec.sun.position.copy(c).addScaledVector(SUN,1000); st.rec.sun.target.position.copy(c); st.rec.sun.target.updateMatrixWorld(); }
+  st.rec.sun.position.copy(c).addScaledVector(SUN,1000); st.rec.sun.target.position.copy(c); st.rec.sun.target.updateMatrixWorld(); st._sh=c.clone(); st._shh=half; }
 function floorAt(x,z,fromY=600){ ray.set(tmpV.set(x,fromY,z),new THREE.Vector3(0,-1,0)); ray.far=2000;
   const h=ray.intersectObjects(st.rec.walk,false); ray.far=Infinity; return h.length?h[0]:null; }
 function zoneAt(p){ ray.set(tmpV.set(p.x,p.y+.5,p.z),new THREE.Vector3(0,-1,0)); ray.far=12; const h=ray.intersectObjects(st.rec.walk,false); ray.far=Infinity; return h.length?h[0].object.userData.k:null; }
@@ -858,7 +858,22 @@ export function exitFP(){ if(!st.rec) return; const p=orbitPos(st.orb,new THREE.
   const q=new THREE.Quaternion().setFromRotationMatrix(m); fitShadow(st.rec.center,st.rec.radius*1.15);
   flyTo(p,q,45,1400,()=>{ st.mode='orbit'; st.zone=null; }); st.mode='fly'; hooks.onMode&&hooks.onMode('orbit'); }
 export function orbitReset(){ if(!st.rec) return; const o=st.rec.orbit; st.orb.th=o.th; st.orb.ph=o.ph;
-  const a=camera.aspect||1; st.orb.d=o.d*Math.max(1,Math.pow(1.25/a,.85)); }
+  const a=camera.aspect||1; st.orb.d=o.d*Math.max(1,Math.pow(1.25/a,.85)); st.orb.tgt.copy(st.rec.center); }
+// 화면 위 한 점이 가리키는 땅(목표 높이 평면) 위치
+const _pl=new THREE.Plane(new THREE.Vector3(0,1,0),0), _gp=new THREE.Vector3();
+function groundAt(cx,cy){ const r=canvas.getBoundingClientRect(); ndc.set(((cx-r.left)/r.width)*2-1,-((cy-r.top)/r.height)*2+1);
+  ray.setFromCamera(ndc,camera); _pl.constant=-st.orb.tgt.y; return ray.ray.intersectPlane(_pl,_gp); }
+function clampTarget(){ const c=st.rec.center, R=st.rec.radius*1.5, dx=st.orb.tgt.x-c.x, dz=st.orb.tgt.z-c.z, l=Math.hypot(dx,dz);
+  if(l>R){ st.orb.tgt.x=c.x+dx/l*R; st.orb.tgt.z=c.z+dz/l*R; } }
+function panOrbit(dx,dy){ const s=2*st.orb.d*Math.tan(camera.fov*Math.PI/360)/Math.max(1,canvas.clientHeight), th=st.orb.th;
+  const k=1/Math.max(.35,Math.cos(st.orb.ph)*.6+.4);
+  st.orb.tgt.x+=(-Math.cos(th)*dx - Math.sin(th)*dy*k)*s; st.orb.tgt.z+=(Math.sin(th)*dx - Math.cos(th)*dy*k)*s; clampTarget(); }
+function zoomOrbit(f,cx,cy){ const R0=st.rec.radius, nd=Math.max(R0*.05,Math.min(R0*4,st.orb.d*f)), real=nd/st.orb.d;
+  if(cx!=null){ applyCam(); const g=groundAt(cx,cy); if(g){ st.orb.tgt.x+=(g.x-st.orb.tgt.x)*(1-real); st.orb.tgt.z+=(g.z-st.orb.tgt.z)*(1-real); clampTarget(); } }
+  st.orb.d=nd; }
+function zoomFP(f){ st.fp.fov=Math.max(24,Math.min(112,st.fp.fov*f)); }
+export function zoomStep(f){ if(!st.rec||st.anim) return;
+  if(st.mode==='orbit'){ const r=canvas.getBoundingClientRect(); zoomOrbit(f,r.left+r.width/2,r.top+r.height/2); } else if(st.mode==='fp') zoomFP(f); }
 export function spin(d){ if(st.mode!=='orbit') return; const a=st.orb.th, b=a+d, t0=performance.now();
   st.anim={t0,dur:380,step:k=>{ const e=1-Math.pow(1-k,3); st.orb.th=a+(b-a)*e; applyCam(); },done:()=>{}}; }
 export function lookTurn(d){ if(st.mode!=='fp') return; const a=st.fp.yaw, t0=performance.now();
@@ -892,6 +907,8 @@ function loop(t){
   if(!st.visible){ raf=null; return; } raf=requestAnimationFrame(loop);
   if(st.anim){ const k=Math.min(1,(t-st.anim.t0)/st.anim.dur); st.anim.step(k); if(k>=1){ const d=st.anim.done; st.anim=null; d&&d(); applyCam(); } }
   else applyCam();
+  if(st.mode==='orbit'&&!st.anim){ const half=Math.min(st.rec.radius*1.15,Math.max(120,st.orb.d*1.1));
+    if(!st._sh||st._sh.distanceTo(st.orb.tgt)>half*.25||Math.abs(st._shh-half)>half*.3) fitShadow(st.orb.tgt.clone(),half); }
   st.rec.sky.position.copy(camera.position);
   st.rec.FX.update(t/1000); updLabels();
   renderer.render(st.rec.scene,camera);
@@ -915,28 +932,33 @@ export function init(container,hk){
   envTex=pm.fromScene(es,.03).texture;
   new ResizeObserver(resize).observe(host);
   // 입력
+  // 3D 구조: 한 손가락 = 돌리기, 두 손가락 = 확대·축소 + 옆으로 옮기기 (마우스는 오른쪽 버튼이나 Shift+끌기로 옮기기)
+  // 1인칭: 한 손가락 = 둘러보기, 두 손가락 = 확대·축소(넓게 보기)
   const ptrs=new Map(); let down=null, pinch=null;
-  const dist2=()=>{ const a=[...ptrs.values()]; return Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y); };
+  const pts=()=>[...ptrs.values()];
+  const dist2=()=>{ const a=pts(); return Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y); };
+  const mid=()=>{ const a=pts(); return [(a[0].x+a[1].x)/2,(a[0].y+a[1].y)/2]; };
   canvas.addEventListener('pointerdown',e=>{ try{canvas.setPointerCapture(e.pointerId);}catch(_){}
     ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(ptrs.size===1) down={x:e.clientX,y:e.clientY,t:performance.now(),moved:false};
-    if(ptrs.size===2){ pinch={d:dist2(),v:st.mode==='orbit'?st.orb.d:st.fp.fov}; if(down) down.moved=true; } });
+    if(ptrs.size===1) down={x:e.clientX,y:e.clientY,t:performance.now(),moved:false,pan:e.button===2||e.shiftKey||e.ctrlKey};
+    if(ptrs.size===2){ const m=mid(); pinch={d:dist2(),mx:m[0],my:m[1]}; if(down) down.moved=true; } });
   canvas.addEventListener('pointermove',e=>{ const p=ptrs.get(e.pointerId); if(!p) return; e.preventDefault();
     const dx=e.clientX-p.x, dy=e.clientY-p.y; p.x=e.clientX; p.y=e.clientY;
+    if(st.anim) return;
     if(ptrs.size===1&&down){ if(Math.abs(e.clientX-down.x)+Math.abs(e.clientY-down.y)>6) down.moved=true;
-      if(!down.moved||st.anim) return;
-      if(st.mode==='orbit'){ st.orb.th-=dx*.006; st.orb.ph=Math.max(.14,Math.min(1.47,st.orb.ph-dy*.005)); }
+      if(!down.moved) return;
+      if(st.mode==='orbit'){ if(down.pan) panOrbit(dx,dy); else { st.orb.th-=dx*.006; st.orb.ph=Math.max(.08,Math.min(1.54,st.orb.ph-dy*.005)); } }
       else if(st.mode==='fp'){ const s=st.fp.fov/62; st.fp.yaw+=dx*.0045*s; st.fp.pitch=Math.max(-.85,Math.min(.95,st.fp.pitch+dy*.0045*s)); } }
-    else if(ptrs.size===2&&pinch){ const r=pinch.d/Math.max(10,dist2());
-      if(st.mode==='orbit'){ const R0=st.rec.radius; st.orb.d=Math.max(R0*.28,Math.min(R0*4,pinch.v*r)); }
-      else if(st.mode==='fp') st.fp.fov=Math.max(24,Math.min(80,pinch.v*r)); } },{passive:false});
+    else if(ptrs.size===2&&pinch){ const d=Math.max(10,dist2()), f=pinch.d/d, m=mid();
+      if(st.mode==='orbit'){ zoomOrbit(f,m[0],m[1]); panOrbit(m[0]-pinch.mx,m[1]-pinch.my); }
+      else if(st.mode==='fp') zoomFP(f);
+      pinch.d=d; pinch.mx=m[0]; pinch.my=m[1]; } },{passive:false});
   const up=e=>{ const had=ptrs.has(e.pointerId); ptrs.delete(e.pointerId); if(ptrs.size<2) pinch=null;
     if(had&&ptrs.size===0&&down&&!down.moved&&performance.now()-down.t<550) tap(e.clientX,e.clientY);
     if(ptrs.size===0) down=null; };
   canvas.addEventListener('pointerup',up); canvas.addEventListener('pointercancel',e=>{ ptrs.delete(e.pointerId); pinch=null; down=null; });
-  canvas.addEventListener('wheel',e=>{ e.preventDefault(); const f=Math.exp(e.deltaY*.0012);
-    if(st.mode==='orbit'){ const R0=st.rec.radius; st.orb.d=Math.max(R0*.28,Math.min(R0*4,st.orb.d*f)); }
-    else if(st.mode==='fp') st.fp.fov=Math.max(24,Math.min(80,st.fp.fov*f)); },{passive:false});
+  canvas.addEventListener('wheel',e=>{ e.preventDefault(); if(st.anim) return; const f=Math.exp(e.deltaY*.0012);
+    if(st.mode==='orbit') zoomOrbit(f,e.clientX,e.clientY); else if(st.mode==='fp') zoomFP(f); },{passive:false});
   canvas.addEventListener('contextmenu',e=>e.preventDefault());
 }
 export function show(tid,opt={}){

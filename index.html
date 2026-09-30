@@ -262,8 +262,9 @@ svg.robefig .rpart:hover{filter:brightness(1.5) drop-shadow(0 0 4px rgba(217,164
       <div class="vpbar" id="vpbar"></div>
       <div class="t3load" id="t3load">3D 성전을 짓는 중…</div>
       <div class="fpcard" id="fpcard"></div>
-      <p class="scenehint t3hint o">드래그로 회전 · 두 손가락 확대 · 뜰을 누르면 그 자리로</p>
-      <p class="scenehint t3hint f">드래그로 둘러보기 · 바닥을 누르면 걸어갑니다</p>
+      <p class="scenehint t3hint o">한 손가락: 돌리기 · 두 손가락: 확대·옮기기 · 뜰을 누르면 그 자리로</p>
+      <p class="scenehint t3hint f">드래그로 둘러보기 · 두 손가락으로 넓게/좁게 · 바닥을 누르면 걸어갑니다</p>
+      <div class="zoombar"><button id="t3zin" title="확대">+</button><button id="t3zout" title="축소">−</button></div>
       <div class="rotbar t3bar">
         <button id="t3left" title="왼쪽"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
         <button id="t3home" title="처음 보기">⌂</button>
@@ -973,7 +974,8 @@ function renderItem(){
       ${rows.length?sec('규격 · 재료',kv(rows)):''}
       ${it.use?sec(story?'내용':'쓰임',`<p>${it.use}</p>`):''}
       ${it.meaning?sec(story?'의미':'신앙적 의미',`<p>${it.meaning}</p>`):''}
-      ${it.type?sec('그리스도의 예표',`<p class="tp">${it.type}</p>`):''}
+      ${(it.more||[]).map(([l,t])=>sec(l,`<p>${t}</p>`)).join('')}
+      ${it.type&&!it.t?sec('그리스도의 예표',`<p class="tp">${it.type}</p>`):''}
       ${it.note?sec('참고',`<p class="note">${it.note}</p>`):''}
       ${scriptureBlock(k,'T')}
     </div>`;
