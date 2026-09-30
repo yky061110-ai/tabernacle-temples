@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>성막과 성전</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
+<link rel="stylesheet" href="temples.css">
+  <link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#141210">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="성막과 성전">
+  <meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#141210; --bg2:#1c1916; --panel:#231f1b; --panel-2:#2a251f;
+  --line:#3a332b; --txt:#EFE9DD; --txt-soft:#A79C8A; --txt-dim:#6f665a;
+  --gold:#D9A441; --court:#C68A2E; --holy:#C4453C; --mhk:#8A79B0;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--txt);overscroll-behavior-y:contain;
+  font-family:'IBM Plex Sans KR',system-ui,sans-serif;line-height:1.7;
+  word-break:keep-all;-webkit-font-smoothing:antialiased}
+.wrap{max-width:880px;margin:0 auto;padding:0 12px 50px}
+
+header{padding:20px 0 10px;text-align:center}
+h1{font-family:'Gowun Batang',serif;font-weight:700;font-size:clamp(24px,6vw,34px);margin:0}
+h1 .glow{color:var(--gold)}
+.sub{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.2em;
+  color:var(--txt-dim);text-transform:uppercase;margin:5px 0 0}
+
+.search{position:relative;margin:12px 0 0}
+.search>svg{position:absolute;left:15px;top:21px;transform:translateY(-50%);
+  width:17px;height:17px;color:var(--txt-dim);pointer-events:none}
+.search input{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:13px;
+  padding:11px 42px 11px 44px;color:var(--txt);font-size:14.5px;font-family:inherit;outline:none;transition:.15s}
+.search input::placeholder{color:var(--txt-dim)}
+.search input:focus{border-color:var(--gold);background:var(--panel-2)}
+.search .clr{position:absolute;right:11px;top:21px;transform:translateY(-50%);
+  width:24px;height:24px;border:none;background:var(--line);color:var(--txt-soft);border-radius:50%;
+  cursor:pointer;display:none;align-items:center;justify-content:center;font-size:14px}
+.search .clr.on{display:flex}
+.reslist{display:none;flex-direction:column;gap:6px;margin-top:9px}
+.reslist.on{display:flex}
+.res{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--panel);
+  border:1px solid var(--line);border-radius:10px;padding:10px 13px;cursor:pointer;color:var(--txt);
+  font-family:inherit;font-size:14px;text-align:left}
+.res:hover{background:var(--panel-2);border-color:var(--gold)}
+.res span{font-family:'Space Mono',monospace;font-size:10px;color:var(--txt-dim)}
+.nores{color:var(--txt-dim);font-size:13px;padding:10px 4px;text-align:center}
+
+/* 제사장 버튼 — 검색창 바로 아래 */
+.priestbar{margin:12px 0 0}
+.pbtn{width:100%;border:1px solid var(--line);background:linear-gradient(90deg,rgba(217,164,65,.10),var(--panel));
+  color:var(--txt);border-radius:13px;padding:12px 16px;font-size:14px;cursor:pointer;font-family:inherit;
+  display:flex;align-items:center;gap:10px;transition:.15s}
+.pbtn:hover{border-color:var(--gold);background:linear-gradient(90deg,rgba(217,164,65,.18),var(--panel-2))}
+.pbtn b{font-weight:600}
+.pbtn em{font-style:normal;font-family:'Space Mono',monospace;font-size:10.5px;color:var(--txt-dim);margin-left:auto}
+.pbtn .ico{width:26px;height:26px;border-radius:8px;background:var(--gold);color:#1a1712;
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:none}
+
+/* 조감도 — 화면 대부분 */
+.scenebox{position:relative;margin:12px 0 0;background:radial-gradient(120% 90% at 50% 25%,#1e1a17,#121010);
+  border:1px solid var(--line);border-radius:20px;overflow:hidden;touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none}
+svg#scene{width:100%;height:auto;display:block;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;will-change:transform;overscroll-behavior:none;-webkit-touch-callout:none;
+  height:min(78vh,700px)}
+svg#scene:active{cursor:grabbing}
+svg#scene .hot{transition:filter .15s}
+svg#scene .hot:hover{filter:brightness(1.4)}
+svg#scene .lbl:hover text{fill:var(--gold)}
+svg#scene text{font-family:'IBM Plex Sans KR',sans-serif}
+.rotbar{position:absolute;right:10px;bottom:10px;display:flex;gap:6px}
+.rotbar button{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);
+  background:rgba(20,18,16,.88);color:var(--txt-soft);cursor:pointer;display:flex;
+  align-items:center;justify-content:center;font-size:14px;font-family:'Space Mono',monospace}
+.rotbar button:hover{color:var(--gold);border-color:var(--gold)}
+.rotbar svg{width:16px;height:16px}
+.scenehint{position:absolute;left:12px;bottom:16px;font-family:'Space Mono',monospace;
+  font-size:10px;color:var(--txt-dim);letter-spacing:.05em;pointer-events:none;max-width:56%}
+
+/* 구역별 목록 — 정렬된 그리드 */
+.glist{margin:14px 0 0;display:flex;flex-direction:column;gap:10px}
+.gsec{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:11px 13px}
+.ghead{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;
+  color:var(--txt-soft);margin-bottom:9px}
+.ghead i{width:9px;height:9px;border-radius:50%;background:var(--gold);flex:none}
+.gsec.z-court .ghead i{background:var(--court)}
+.gsec.z-holy .ghead i{background:var(--holy)}
+.gsec.z-mhk .ghead i{background:var(--mhk)}
+.ghead em{font-style:normal;font-family:'Space Mono',monospace;font-size:10px;
+  color:var(--txt-dim);margin-left:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:7px}
+.gitem{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:10px 6px;
+  font-size:12.5px;color:var(--txt);cursor:pointer;font-family:inherit;transition:.15s;
+  text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gitem:hover{background:var(--panel-2);border-color:var(--gold);color:var(--gold)}
+
+/* 줌 연출 */
+.zoomfx{position:fixed;inset:0;pointer-events:none;z-index:60;opacity:0}
+.zoomfx.on{animation:suck .34s ease-in forwards}
+@keyframes suck{
+  0%{opacity:0;transform:scale(1);background:radial-gradient(circle at 50% 45%,rgba(217,164,65,0) 0%,rgba(20,18,16,0) 60%)}
+  60%{opacity:1;background:radial-gradient(circle at 50% 45%,rgba(217,164,65,.22) 0%,rgba(20,18,16,.9) 55%)}
+  100%{opacity:1;transform:scale(1.9);background:radial-gradient(circle at 50% 45%,rgba(217,164,65,.10) 0%,rgba(20,18,16,1) 45%)}
+}
+/* 모달 */
+.overlay{position:fixed;inset:0;background:rgba(8,7,6,.8);backdrop-filter:blur(3px);display:none;
+  align-items:flex-start;justify-content:center;z-index:70;padding:16px 12px;overflow-y:auto}
+.overlay.on{display:flex}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:20px;width:100%;
+  max-width:560px;margin:auto;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.6);
+  animation:zin .28s cubic-bezier(.2,.9,.3,1)}
+@keyframes zin{from{transform:scale(.84);opacity:0}to{transform:scale(1);opacity:1}}
+.mtop{padding:18px 20px 14px;position:relative}
+.mtop:before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--gold)}
+.modal.z-court .mtop:before{background:var(--court)}
+.modal.z-holy .mtop:before{background:var(--holy)}
+.modal.z-mhk .mtop:before{background:var(--mhk)}
+.mclose{position:absolute;right:13px;top:13px;width:31px;height:31px;border-radius:50%;
+  border:1px solid var(--line);background:var(--bg2);color:var(--txt-soft);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:15px}
+.mback{position:absolute;right:52px;top:13px;height:31px;border-radius:16px;padding:0 12px;
+  border:1px solid var(--line);background:var(--bg2);color:var(--txt-soft);cursor:pointer;
+  font-size:12px;font-family:inherit}
+.mback:hover,.mclose:hover{background:var(--panel-2);color:var(--txt)}
+.mzone{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  margin-bottom:6px;color:var(--gold)}
+.modal.z-court .mzone{color:var(--court)} .modal.z-holy .mzone{color:var(--holy)} .modal.z-mhk .mzone{color:var(--mhk)}
+.mname{font-family:'Gowun Batang',serif;font-weight:700;font-size:24px;margin:0;line-height:1.25;padding-right:100px}
+.men{font-family:'Space Mono',monospace;font-size:11px;color:var(--txt-soft);margin:4px 0 0}
+.crumbs{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:0 20px 10px;font-size:10.5px;
+  color:var(--txt-dim);font-family:'Space Mono',monospace}
+.crumbs i{font-style:normal;opacity:.5}
+.crumbs .cb{cursor:pointer}
+.crumbs .cb:hover{color:var(--txt-soft)}
+.crumbs .cb.on{color:var(--gold)}
+
+.interior{padding:0 14px 8px}
+.ihead{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--txt-dim);margin-bottom:6px;text-align:center}
+svg.floor{width:100%;height:auto;display:block;border-radius:12px;border:1px solid var(--line)}
+svg.floor .fitem{transition:filter .15s}
+svg.floor .fitem:hover{filter:brightness(1.4)}
+svg.floor text{font-family:'IBM Plex Sans KR',sans-serif}
+
+/* 평면 정보 섹션 (트리 없음) */
+.mbody{padding:4px 20px 20px}
+.sec{padding:13px 0;border-top:1px solid var(--line)}
+.sec:first-child{border-top:none;padding-top:4px}
+.seclbl{font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--txt-dim);margin-bottom:7px}
+.sec p{margin:0;font-size:14.5px}
+.sec p.tp{color:var(--gold);background:rgba(217,164,65,.07);border-left:2px solid var(--gold);
+  padding:10px 13px;border-radius:0 8px 8px 0;font-size:14px}
+dl.kv{margin:0;display:grid;grid-template-columns:42px 1fr;gap:6px 10px}
+dl.kv dt{font-family:'Space Mono',monospace;font-size:9.5px;color:var(--txt-dim);padding-top:4px;
+  text-transform:uppercase}
+dl.kv dd{margin:0;font-size:14px}
+
+.reflist{display:flex;flex-wrap:wrap;gap:6px}
+.refpill{font-family:'Space Mono',monospace;font-size:11.5px;border:1px solid var(--line);
+  background:var(--bg2);color:var(--gold);border-radius:8px;padding:5px 10px;cursor:pointer;transition:.15s}
+.refpill:hover{background:var(--panel-2);border-color:var(--gold)}
+.refpill.on{background:var(--gold);color:#1a1712;border-color:var(--gold)}
+.verses{margin-top:10px;display:flex;flex-direction:column;gap:9px}
+.vblock{border-left:2px solid var(--line);padding:2px 0 2px 12px}
+.vblock .vh{font-family:'Space Mono',monospace;font-size:10.5px;color:var(--txt-dim);margin-bottom:3px}
+.vblock p{margin:0 0 5px;font-size:14px;line-height:1.65}
+.vblock p:last-child{margin:0}
+.vblock .vn{color:var(--gold);font-family:'Space Mono',monospace;font-size:10.5px;margin-right:5px}
+
+/* 제사장 */
+.ptabs{display:flex;gap:6px;padding:0 20px 12px}
+.ptab{flex:1;border:1px solid var(--line);background:var(--bg2);color:var(--txt-soft);border-radius:10px;
+  padding:9px 0;font-size:13.5px;cursor:pointer;font-family:inherit;transition:.15s}
+.ptab.on{background:var(--gold);color:#1a1712;border-color:var(--gold);font-weight:600}
+.cards{display:flex;flex-direction:column;gap:8px}
+.pcard{background:var(--bg2);border:1px solid var(--line);border-radius:13px;padding:12px 14px;
+  cursor:pointer;color:var(--txt);font-family:inherit;text-align:left;transition:.15s}
+.pcard:hover{background:var(--panel-2);border-color:var(--gold)}
+.pc-h{display:flex;align-items:baseline;gap:8px;margin-bottom:3px}
+.pc-h b{font-size:15px;font-weight:600}
+.pc-h em{font-style:normal;font-family:'Space Mono',monospace;font-size:10px;color:var(--txt-dim);margin-left:auto}
+.pcard p{margin:0;font-size:12.5px;color:var(--txt-soft);line-height:1.6}
+.robewrap{text-align:center;margin-bottom:14px}
+svg.robefig{width:158px;height:auto;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:6px}
+svg.robefig .rpart{transition:filter .15s}
+svg.robefig .rpart:hover{filter:brightness(1.5) drop-shadow(0 0 4px rgba(217,164,65,.7))}
+.rhint{font-family:'Space Mono',monospace;font-size:10px;color:var(--txt-dim);margin-top:6px}
+.dhead{padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:2px}
+.dhead h4{font-family:'Gowun Batang',serif;font-size:20px;margin:0;font-weight:700}
+.dhead span{font-family:'Space Mono',monospace;font-size:10.5px;color:var(--txt-dim)}
+
+.timeline{position:relative;padding-left:18px}
+.timeline:before{content:"";position:absolute;left:4px;top:12px;bottom:12px;width:2px;background:var(--line)}
+.tnode{display:block;width:100%;background:none;border:none;padding:5px 0;cursor:pointer;
+  color:var(--txt);font-family:inherit;text-align:left;position:relative}
+.tdot{position:absolute;left:-18px;top:20px;width:10px;height:10px;border-radius:50%;
+  background:var(--gold);border:2px solid var(--panel)}
+.tnode.warn .tdot{background:var(--holy)}
+.tnode.christ .tdot{background:#fff;box-shadow:0 0 8px rgba(255,255,255,.55)}
+.tinfo{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 13px;transition:.15s}
+.tnode:hover .tinfo{background:var(--panel-2);border-color:var(--gold)}
+.tnode.christ .tinfo{border-color:var(--gold);background:linear-gradient(90deg,rgba(217,164,65,.12),var(--bg2))}
+.tl-h{display:flex;align-items:baseline;gap:8px}
+.tl-h b{font-size:15px;font-weight:600}
+.tl-h em{font-style:normal;font-family:'Space Mono',monospace;font-size:10px;color:var(--txt-dim)}
+.tinfo span{display:block;font-size:12.5px;color:var(--txt-soft);margin-top:2px}
+.tinfo small{display:block;font-family:'Space Mono',monospace;font-size:9.5px;color:var(--txt-dim);margin-top:3px}
+
+@media (max-width:560px){
+  .mname{font-size:20px;padding-right:92px}
+  svg#scene{height:min(70vh,560px)}
+  .scenehint{font-size:9px;max-width:50%}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(84px,1fr))}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1 id="ttl">성 <span class="glow">막</span></h1>
+  <p class="sub" id="tsub">The Tabernacle · 출애굽기 25–40</p>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-t="tab" class="on"><b>성막</b><em>출애굽기</em></button>
+  <button data-t="solomon"><b>솔로몬 성전</b><em>열왕기 · 역대기</em></button>
+  <button data-t="herod"><b>헤롯 성전</b><em>예수님 당시</em></button>
+  <button data-t="ezekiel"><b>에스겔 성전</b><em>천년왕국</em></button>
+</nav>
+
+<div class="search">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+  <input id="q" type="text" placeholder="검색 (번제단, 야긴, 미문, 닫힌 동문…)" autocomplete="off">
+  <button class="clr" id="clr">✕</button>
+  <div class="reslist" id="reslist"></div>
+</div>
+
+<div id="pane-temple" hidden>
+  <div class="tmodes" id="tmodes">
+    <button data-m="plan" class="on"><b>조감도</b><em>평면 · 기호</em></button>
+    <button data-m="orbit"><b>3D 구조</b><em>돌려 보기</em></button>
+    <button data-m="fp"><b>1인칭</b><em>안에 서 보기</em></button>
+  </div>
+  <div class="tstage" id="tstage" data-mode="plan">
+    <div class="tview tplan" id="tplan">
+      <div class="planwrap"></div>
+      <p class="scenehint">뜰을 누르면 그 자리에 들어가 봅니다 · 두 손가락으로 확대</p>
+      <div class="rotbar"><button id="pzout" title="축소">−</button><button id="pzreset" title="전체">⌂</button><button id="pzin" title="확대">+</button></div>
+    </div>
+    <div class="tview t3d" id="t3d" hidden>
+      <div class="vpbar" id="vpbar"></div>
+      <div class="t3load" id="t3load">3D 성전을 짓는 중…</div>
+      <div class="fpcard" id="fpcard"></div>
+      <p class="scenehint t3hint o">드래그로 회전 · 두 손가락 확대 · 뜰을 누르면 그 자리로</p>
+      <p class="scenehint t3hint f">드래그로 둘러보기 · 바닥을 누르면 걸어갑니다</p>
+      <div class="rotbar t3bar">
+        <button id="t3left" title="왼쪽"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <button id="t3home" title="처음 보기">⌂</button>
+        <button id="t3right" title="오른쪽"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
+        <button id="t3full" title="크게 보기">⛶</button>
+      </div>
+    </div>
+  </div>
+  <div class="tlegend" id="tlegend"></div>
+  <div class="priestbar"><button class="pbtn" id="histBtn"></button></div>
+  <div class="glist" id="tglist"></div>
+</div>
+
+<div id="pane-tab">
+<div class="scenebox">
+  <svg id="scene" viewBox="0 0 760 640" preserveAspectRatio="xMidYMid meet" aria-label="성막 조감도"></svg>
+  <p class="scenehint">드래그로 회전 · 누르면 들어갑니다</p>
+  <div class="rotbar">
+    <button id="rleft" title="왼쪽"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <button id="rreset" title="정면">⌂</button>
+    <button id="rright" title="오른쪽"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
+  </div>
+</div>
+
+<div class="priestbar">
+  <button class="pbtn" id="priestBtn">
+    <span class="ico">✛</span>
+    <b>제사장</b>
+    <em>직무 · 의복 · 계보</em>
+  </button>
+</div>
+
+<div class="glist" id="glist"></div>
+</div>
+
+</div>
+
+<div class="zoomfx" id="zoomfx"></div>
+<div class="overlay" id="hoverlay"><div class="modal" id="hmodal" role="dialog" aria-modal="true"></div></div>
+<div class="overlay" id="overlay"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
+<div class="overlay" id="poverlay"><div class="modal" id="pmodal" role="dialog" aria-modal="true"></div></div>
+
+<script>
+
+
+const ITEMS = {
+  // ═══ 뜰 (LEVEL 1) ═══
+  court: {
+    level:"court", name:"성막 뜰", en:"THE COURT", zone:"뜰",
+    size:"길이 100규빗 × 너비 50규빗 (약 45m × 22.5m) · 세마포 휘장 높이 5규빗(약 2.25m)",
+    material:"가늘게 꼰 세마포 휘장, 놋 받침 60개, 은 갈고리와 가름대, 조각목 기둥 60개",
+    use:"성막 전체를 둘러싼 울타리. 이스라엘 백성이 제물을 가지고 들어와 예배하는 공간이며, 거룩한 곳과 속된 곳을 구분하는 경계였다.",
+    meaning:"하얀 세마포 휘장은 하나님의 의(義)를 나타낸다. 사람이 스스로의 힘으로는 넘을 수 없는 거룩의 경계이며, 오직 정해진 문으로만 들어갈 수 있었다.",
+    type:"하나님께 나아가는 길은 사람이 마음대로 정할 수 없고 하나님이 정하신 한 길로만 열려 있음을 보여 준다.",
+    kw:"뜰 court 세마포 울타리 마당"
+  },
+  gate: {
+    level:"court", name:"동문 (뜰 문)", en:"THE GATE · EAST", zone:"뜰",
+    size:"너비 20규빗(약 9m) · 높이 5규빗(약 2.25m) · 기둥 4개",
+    material:"청색·자색·홍색 실과 가늘게 꼰 베 실로 수 놓아 짠 휘장",
+    use:"성막 뜰로 들어가는 유일한 출입구. 반드시 동쪽에 있었고, 제물을 가진 자는 누구나 이 문으로만 들어갔다.",
+    meaning:"뜰의 사면 중 오직 동쪽 한 곳에만 문이 있었다. 하나님께 나아가는 길은 여럿이 아니라 하나이며, 그 문은 모든 지파에게 똑같이 열려 있었다.",
+    type:"예수님은 자신을 '문'이라 하셨다. 누구든지 그로 말미암아 들어가면 구원을 받는다. 청·자·홍색 실은 각각 하늘에 속하심, 왕 되심, 흘리신 피를 나타내는 것으로 읽힌다.",
+    kw:"동문 문 gate 출입구 동쪽"
+  },
+  altar: {
+    level:"court", name:"번제단", en:"BRAZEN ALTAR", zone:"뜰",
+    size:"가로 5규빗 × 세로 5규빗 × 높이 3규빗 (약 225cm × 225cm × 135cm) · 네모 반듯",
+    material:"조각목(아카시아 나무)에 놋을 입힘. 네 모퉁이에 뿔, 놋 그물과 채와 기구들",
+    use:"문으로 들어서면 가장 먼저 만나는 기구. 번제·속죄제·화목제 등 모든 희생 제물을 잡아 불로 태워 드리던 곳이다. 제단 불은 꺼뜨리지 않고 항상 피워 두었다.",
+    meaning:"죄인은 피 흘림 없이는 하나님께 나아갈 수 없었다. 예배는 감정이나 결심이 아니라 대속의 죽음에서 시작된다는 것을 가르친다. 놋은 심판을 견디는 것을 상징한다.",
+    type:"갈보리 십자가를 가리킨다. 흠 없는 제물이 죄인을 대신해 불에 태워지듯, 그리스도께서 우리 죄를 지고 죽으셨다. 제단의 뿔은 도피처가 되어 주는 은혜를 나타낸다.",
+    kw:"번제단 제단 altar 놋제단 희생 제물 뿔"
+  },
+  laver: {
+    level:"court", name:"물두멍", en:"THE LAVER", zone:"뜰",
+    size:"성경에 치수가 기록되지 않음 (규격이 명시되지 않은 유일한 기구)",
+    material:"놋으로 만들고 받침도 놋. 회막 문에서 수종드는 여인들의 놋 거울로 만들어졌다(출 38:8)",
+    use:"번제단과 회막 사이에 두고 물을 담아, 제사장이 성소에 들어가거나 제단에서 섬기기 전에 수족을 씻던 대야.",
+    meaning:"제단이 '단번의 대속'이라면 물두멍은 '날마다의 정결'이다. 이미 구별된 제사장도 섬기기 전에 손발의 더러움을 씻어야 했다. 거울로 만들어진 놋은 자기를 비춰 보게 한다.",
+    type:"말씀의 물로 씻어 우리를 깨끗하게 하시는 사역을 보여 준다. 구원은 단번이지만, 교제를 위한 씻음은 날마다 필요하다.",
+    kw:"물두멍 laver 놋대야 씻음 정결 물"
+  },
+
+  // ═══ 성소 (LEVEL 2) ═══
+  tent: {
+    level:"holy", name:"성막 (회막) 구조", en:"THE TABERNACLE", zone:"성소",
+    size:"전체 길이 30규빗 × 너비 10규빗 × 높이 10규빗 (약 13.5m × 4.5m × 4.5m) · 성소 20규빗, 지성소 10규빗",
+    material:"조각목 널판 48개에 금을 입히고 은 받침에 세움. 덮개는 네 겹 — 그룹 수 놓은 세마포 휘장, 염소털 휘장, 붉은 물 들인 숫양 가죽, 해달 가죽",
+    use:"하나님이 이스라엘 가운데 임재하시는 처소. 성소와 지성소 두 칸으로 나뉘며, 오직 제사장만 들어갈 수 있었다.",
+    meaning:"하나님이 백성 '가운데' 거하시겠다는 약속의 가시적 표현. 바깥은 투박한 해달 가죽이지만 안으로 들어갈수록 금과 화려한 수(繡)가 드러난다.",
+    type:"말씀이 육신이 되어 우리 가운데 '장막을 치신' 그리스도. 겉으로는 흠모할 것이 없으나 안에는 하나님의 영광이 충만하셨다.",
+    kw:"성막 회막 tabernacle 널판 덮개 휘장 구조"
+  },
+  holy: {
+    level:"holy", name:"성소", en:"THE HOLY PLACE", zone:"성소",
+    size:"길이 20규빗 × 너비 10규빗 × 높이 10규빗 (약 9m × 4.5m × 4.5m)",
+    material:"금 입힌 널판 벽, 그룹을 수 놓은 세마포 천장, 바닥은 광야의 땅",
+    use:"제사장이 날마다 들어가 섬기던 첫째 칸. 등잔대·진설병 상·분향단 세 기구가 놓여 있었다.",
+    meaning:"자연광이 전혀 들지 않아 오직 등잔대의 빛으로만 밝혀졌다. 하나님과의 교제는 사람의 빛이 아니라 하나님이 주신 빛 안에서 이루어진다.",
+    type:"그리스도 안에서 누리는 성도의 일상적 교제 — 빛 가운데 행하고(등잔대), 생명의 떡을 먹으며(진설병), 기도로 나아가는(분향단) 삶.",
+    kw:"성소 holy place 첫째칸 제사장"
+  },
+  lamp: {
+    level:"holy", name:"등잔대 (금촛대)", en:"THE LAMPSTAND · MENORAH", zone:"성소",
+    size:"순금 한 달란트(약 34kg)로 제작 · 높이 치수는 성경에 기록되지 않음",
+    material:"순금을 쳐서(두들겨) 한 덩이로 만듦. 밑판·줄기·잔·꽃받침·꽃이 이어진 통 세공. 가운데 줄기와 좌우 세 가지씩 총 일곱 등잔",
+    use:"성소 남쪽에 두어 빛을 비추었다. 감람으로 짠 순수한 기름을 쓰고, 제사장이 아침저녁으로 심지를 손질해 불이 꺼지지 않게 했다.",
+    meaning:"거푸집에 부어 만든 것이 아니라 두들겨 만든 한 덩이라는 점이 중요하다. 빛은 고난을 통과해 나온다. 일곱은 완전함을 뜻한다.",
+    type:"'나는 세상의 빛이라' 하신 그리스도. 또한 성령의 기름으로 빛을 내는 교회를 나타내며, 요한계시록의 일곱 금촛대는 교회를 가리킨다.",
+    kw:"등잔대 촛대 메노라 lampstand 금촛대 빛 기름 일곱"
+  },
+  table: {
+    level:"holy", name:"진설병 상", en:"TABLE OF SHOWBREAD", zone:"성소",
+    size:"길이 2규빗 × 너비 1규빗 × 높이 1.5규빗 (약 90cm × 45cm × 68cm)",
+    material:"조각목에 순금을 입히고 주위에 금 테를 두름. 대접·숟가락·병·잔은 순금",
+    use:"성소 북쪽에 두고 고운 가루로 구운 떡 열두 개를 두 줄로 진설했다. 위에 정결한 유향을 놓았고, 물린 떡은 제사장이 거룩한 곳에서 먹었다.",
+    meaning:"열두 개의 떡은 열두 지파를 뜻한다. 하나님 앞에 늘 기억되고 받아들여지는 백성, 그리고 하나님이 친히 먹이시는 언약의 식탁을 나타낸다.",
+    type:"'나는 생명의 떡이니' 하신 그리스도. 그분은 자기 백성을 항상 아버지 앞에 기억나게 하시며 친히 양식이 되신다.",
+    kw:"진설병 상 table showbread 떡 열두 금상"
+  },
+  incense: {
+    level:"holy", name:"분향단 (금향단)", en:"ALTAR OF INCENSE", zone:"성소",
+    size:"가로 1규빗 × 세로 1규빗 × 높이 2규빗 (약 45cm × 45cm × 90cm) · 네모 반듯",
+    material:"조각목에 순금을 입히고 금 테를 두름. 네 모퉁이에 뿔, 금 고리와 채",
+    use:"지성소 휘장 바로 앞에 두고 거룩한 향을 살랐다. 이 단 위에는 다른 향이나 번제·소제를 드릴 수 없었다.",
+    meaning:"향은 하나님께 올라가는 기도를 나타낸다. 번제단의 불을 옮겨 와야만 향을 사를 수 있었다 — 기도는 대속의 제단에 근거해야 받아들여진다.",
+    type:"우리를 위해 항상 간구하시는 그리스도의 중보. 성도의 기도가 향과 함께 하나님 앞에 올라간다.",
+    kw:"분향단 금향단 incense 향 기도 중보"
+  },
+  veil: {
+    level:"holy", name:"휘장 (지성소 휘장)", en:"THE VEIL", zone:"성소",
+    size:"성소와 지성소를 나누는 폭 · 금 갈고리와 조각목 기둥 넷, 은 받침 넷에 걸림",
+    material:"청색·자색·홍색 실과 가늘게 꼰 베 실로 짜고, 그룹을 정교하게 수 놓음",
+    use:"성소와 지성소를 갈라 놓은 두꺼운 막. 이 안쪽으로는 오직 대제사장이, 그것도 일 년에 단 한 번만 피를 가지고 들어갔다.",
+    meaning:"수 놓인 그룹은 에덴에서 생명나무 길을 지키던 그룹처럼, 죄인이 하나님의 임재로 함부로 나아갈 수 없음을 경고한다. 길이 아직 열리지 않았다는 표지였다.",
+    type:"그리스도의 육체를 가리킨다. 그분이 십자가에서 숨지실 때 성소 휘장이 위로부터 아래까지 찢어져, 하나님께 나아가는 새롭고 산 길이 열렸다.",
+    kw:"휘장 veil 그룹 찢어짐 장막 커튼"
+  },
+
+  // ═══ 지성소 (LEVEL 3) ═══
+  mhk: {
+    level:"mhk", name:"지성소", en:"THE MOST HOLY PLACE", zone:"지성소",
+    size:"길이 10규빗 × 너비 10규빗 × 높이 10규빗 (약 4.5m 정육면체)",
+    material:"금 입힌 널판으로 둘러싸인 완전한 정육면체 공간. 등불도 창도 없음",
+    use:"언약궤만이 놓인 가장 안쪽 칸. 하나님이 그룹 사이에서 임재하시며 말씀하시던 자리다.",
+    meaning:"가로·세로·높이가 같은 정육면체는 완전함을 뜻한다. 인공의 빛이 전혀 없었으나 하나님의 영광(쉐키나)이 그곳을 채웠다.",
+    type:"하늘 그 자체를 예표한다. 그리스도께서 자기 피를 가지고 단번에 들어가사 영원한 속죄를 이루셨다. 새 예루살렘도 정육면체로 묘사된다.",
+    kw:"지성소 most holy 정육면체 쉐키나 영광"
+  },
+  ark: {
+    level:"mhk", name:"언약궤 (증거궤)", en:"ARK OF THE COVENANT", zone:"지성소",
+    size:"길이 2.5규빗 × 너비 1.5규빗 × 높이 1.5규빗 (약 112cm × 68cm × 68cm)",
+    material:"조각목 궤의 안팎을 순금으로 싸고 금 테를 두름. 네 발에 금 고리, 금 입힌 조각목 채를 꿰어 어깨로 멨다",
+    use:"지성소에 둔 유일한 기구. 안에는 증거판(십계명 돌판)이 들어 있었고, 만나를 담은 금 항아리와 싹 난 아론의 지팡이가 함께 언급된다.",
+    meaning:"하나님의 언약과 통치의 상징. 궤 안의 율법은 사람이 지키지 못한 언약이었고, 그 위를 속죄소가 덮고 있었다는 배치가 복음의 구조를 보여 준다.",
+    type:"신성과 인성을 함께 지니신 그리스도 — 썩지 않는 조각목과 순금. 그분의 마음에는 하나님의 법이 있었고, 그 법을 온전히 이루셨다.",
+    kw:"언약궤 증거궤 ark 법궤 십계명 돌판 만나 지팡이"
+  },
+  mercy: {
+    level:"mhk", name:"속죄소 (시은좌)", en:"THE MERCY SEAT", zone:"지성소",
+    size:"길이 2.5규빗 × 너비 1.5규빗 (약 112cm × 68cm) · 궤의 뚜껑",
+    material:"순금 한 덩이. 두 그룹을 금으로 쳐서 만들어 양쪽 끝에 세우고, 날개를 펴 속죄소를 덮으며 서로 얼굴을 마주하게 함",
+    use:"언약궤의 뚜껑이자 하나님이 임재하시는 보좌. 속죄일에 대제사장이 수송아지와 염소의 피를 이 위와 앞에 일곱 번 뿌렸다.",
+    meaning:"성막의 심장. 심판의 근거인 율법이 궤 안에 있고 그 위를 피 뿌린 금 뚜껑이 덮는다 — 하나님의 공의가 충족되었기에 은혜의 자리가 된다. 그래서 '시은좌'다.",
+    type:"하나님이 그리스도를 화목제물로 세우셨다는 말씀의 원형. 그분의 피가 우리와 율법의 정죄 사이를 덮어, 심판의 자리가 은혜의 보좌로 바뀌었다.",
+    kw:"속죄소 시은좌 mercy seat 그룹 피 화목제물 보좌"
+  }
+};
+
+
+
+</script>
+<script>
+
+
+const SCRIPTURE = {"court": [{"ref": "출27:9-13", "book": "출애굽기", "verses": [{"v": "9", "t": "너는 성막의 뜰을 만들지니 남쪽을 향하여 뜰 남쪽에 너비가 백 규빗의 세마포 휘장을 쳐서 그 한 쪽을 당하게 할지니"}, {"v": "10", "t": "그 기둥이 스물이며 그 받침 스물은 놋으로 하고 그 기둥의 갈고리와 가름대는 은으로 할지며"}, {"v": "11", "t": "그 북쪽에도 너비가 백 규빗의 포장을 치되 그 기둥이 스물이며 그 기둥의 받침 스물은 놋으로 하고 그 기둥의 갈고리와 가름대는 은으로 할지며"}, {"v": "12", "t": "뜰의 옆 곧 서쪽에 너비 쉰 규빗의 포장을 치되 그 기둥이 열이요 받침이 열이며"}, {"v": "13", "t": "동쪽을 향하여 뜰 동쪽의 너비도 쉰 규빗이 될지며"}]}, {"ref": "출27:18", "book": "출애굽기", "verses": [{"v": "18", "t": "뜰의 길이는 백 규빗이요 너비는 쉰 규빗이요 세마포 휘장의 높이는 다섯 규빗이요 그 받침은 놋이며"}]}], "gate": [{"ref": "출27:16", "book": "출애굽기", "verses": [{"v": "16", "t": "뜰 문을 위하여는 청색 자색 홍색 실과 가늘게 꼰 베 실로 수 놓아 짠 스무 규빗의 휘장이 있게 할지니 그 기둥이 넷이요 받침이 넷이며"}]}, {"ref": "요10:9", "book": "요한복음", "verses": [{"v": "9", "t": "내가 문이니 누구든지 나로 말미암아 들어가면 구원을 받고 또는 들어가며 나오며 꼴을 얻으리라"}]}], "altar": [{"ref": "출27:1-2", "book": "출애굽기", "verses": [{"v": "1", "t": "너는 조각목으로 길이가 다섯 규빗, 너비가 다섯 규빗의 제단을 만들되 네모 반듯하게 하며 높이는 삼 규빗으로 하고"}, {"v": "2", "t": "그 네 모퉁이 위에 뿔을 만들되 그 뿔이 그것에 이어지게 하고 그 제단을 놋으로 싸고"}]}, {"ref": "레1:3-4", "book": "레위기", "verses": [{"v": "3", "t": "그 예물이 소의 번제이면 흠 없는 수컷으로 회막 문에서 여호와 앞에 기쁘게 받으시도록 드릴지니라"}, {"v": "4", "t": "그는 번제물의 머리에 안수할지니 그를 위하여 기쁘게 받으심이 되어 그를 위하여 속죄가 될 것이라"}]}, {"ref": "히13:10", "book": "히브리서", "verses": [{"v": "10", "t": "우리에게 제단이 있는데 장막에서 섬기는 자들은 그 제단에서 먹을 권한이 없나니"}]}], "laver": [{"ref": "출30:18-21", "book": "출애굽기", "verses": [{"v": "18", "t": "너는 물두멍을 놋으로 만들고 그 받침도 놋으로 만들어 씻게 하되 그것을 회막과 제단 사이에 두고 그 속에 물을 담으라"}, {"v": "19", "t": "아론과 그의 아들들이 그 두멍에서 수족을 씻되"}, {"v": "20", "t": "그들이 회막에 들어갈 때에 물로 씻어 죽기를 면할 것이요 제단에 가까이 가서 그 직분을 행하여 여호와 앞에 화제를 사를 때에도 그리 할지니라"}, {"v": "21", "t": "이와 같이 그들이 그 수족을 씻어 죽기를 면할지니 이는 그와 그의 자손이 대대로 영원히 지킬 규례니라"}]}, {"ref": "딛3:5", "book": "디도서", "verses": [{"v": "5", "t": "우리를 구원하시되 우리가 행한 바 의로운 행위로 말미암지 아니하고 오직 그의 긍휼하심을 따라 중생의 씻음과 성령의 새롭게 하심으로 하셨나니"}]}], "holy": [{"ref": "출26:1", "book": "출애굽기", "verses": [{"v": "1", "t": "너는 성막을 만들되 가늘게 꼰 베 실과 청색 자색 홍색 실로 그룹을 정교하게 수 놓은 열 폭의 휘장을 만들지니"}]}, {"ref": "히9:2", "book": "히브리서", "verses": [{"v": "2", "t": "예비한 첫 장막이 있고 그 안에 등잔대와 상과 진설병이 있으니 이는 성소라 일컫고"}]}], "lamp": [{"ref": "출25:31-32", "book": "출애굽기", "verses": [{"v": "31", "t": "너는 순금으로 등잔대를 쳐 만들되 그 밑판과 줄기와 잔과 꽃받침과 꽃을 한 덩이로 연결하고"}, {"v": "32", "t": "가지 여섯을 등잔대 곁에서 나오게 하되 다른 세 가지는 이쪽으로 나오고 다른 세 가지는 저쪽으로 나오게 하며"}]}, {"ref": "레24:2-3", "book": "레위기", "verses": [{"v": "2", "t": "이스라엘 자손에게 명령하여 불을 켜기 위하여 감람을 찧어낸 순결한 기름을 네게로 가져오게 하여 계속해서 등잔불을 켜 둘지며"}, {"v": "3", "t": "아론은 회막안 증거궤 휘장 밖에서 저녁부터 아침까지 여호와 앞에 항상 등잔불을 정리할지니 이는 너희 대대로 지킬 영원한 규례라"}]}, {"ref": "요8:12", "book": "요한복음", "verses": [{"v": "12", "t": "예수께서 또 말씀하여 이르시되 나는 세상의 빛이니 나를 따르는 자는 어둠에 다니지 아니하고 생명의 빛을 얻으리라"}]}], "table": [{"ref": "출25:23-24", "book": "출애굽기", "verses": [{"v": "23", "t": "너는 조각목으로 상을 만들되 길이는 두 규빗, 너비는 한 규빗, 높이는 한 규빗 반이 되게 하고"}, {"v": "24", "t": "순금으로 싸고 주위에 금 테를 두르고"}]}, {"ref": "레24:5-6", "book": "레위기", "verses": [{"v": "5", "t": "너는 고운 가루를 가져다가 떡 열두 개를 굽되 각 덩이를 십분의 이 에바로 하여"}, {"v": "6", "t": "여호와 앞 순결한 상 위에 두 줄로 한 줄에 여섯씩 진설하고"}]}, {"ref": "요6:35", "book": "요한복음", "verses": [{"v": "35", "t": "예수께서 이르시되 나는 생명의 떡이니 내게 오는 자는 결코 주리지 아니할 터이요 나를 믿는 자는 영원히 목마르지 아니하리라"}]}], "incense": [{"ref": "출30:1-3", "book": "출애굽기", "verses": [{"v": "1", "t": "너는 분향할 제단을 만들지니 곧 조각목으로 만들되"}, {"v": "2", "t": "길이가 한 규빗, 너비가 한 규빗으로 네모가 반듯하게 하고 높이는 두 규빗으로 하며 그 뿔을 그것과 이어지게 하고"}, {"v": "3", "t": "제단 상면과 전후 좌우 면과 뿔을 순금으로 싸고 주위에 금 테를 두를지며"}]}, {"ref": "출30:7-8", "book": "출애굽기", "verses": [{"v": "7", "t": "아론이 아침마다 그 위에 향기로운 향을 사르되 등불을 손질할 때에 사를지며"}, {"v": "8", "t": "또 저녁 때 등불을 켤 때에 사를지니 이 향은 너희가 대대로 여호와 앞에 끊지 못할지며"}]}, {"ref": "계8:3-4", "book": "요한계시록", "verses": [{"v": "3", "t": "또 다른 천사가 와서 제단 곁에 서서 금 향로를 가지고 많은 향을 받았으니 이는 모든 성도의 기도와 합하여 보좌 앞 금 제단에 드리고자 함이라"}, {"v": "4", "t": "향연이 성도의 기도와 함께 천사의 손으로부터 하나님 앞으로 올라가는지라"}]}], "veil": [{"ref": "출26:31-33", "book": "출애굽기", "verses": [{"v": "31", "t": "너는 청색 자색 홍색 실과 가늘게 꼰 베 실로 짜서 휘장을 만들고 그 위에 그룹들을 정교하게 수 놓아서"}, {"v": "32", "t": "금 갈고리를 네 기둥 위에 늘어뜨리되 그 네 기둥을 조각목으로 만들고 금으로 싸서 네 은 받침 위에 둘지며"}, {"v": "33", "t": "그 휘장을 갈고리 아래에 늘어뜨린 후에 증거궤를 그 휘장 안에 들여놓으라 그 휘장이 너희를 위하여 성소와 지성소를 구분하리라"}]}, {"ref": "마27:51", "book": "마태복음", "verses": [{"v": "51", "t": "이에 성소 휘장이 위로부터 아래까지 찢어져 둘이 되고 땅이 진동하며 바위가 터지고"}]}, {"ref": "히10:19-20", "book": "히브리서", "verses": [{"v": "19", "t": "그러므로 형제들아 우리가 예수의 피를 힘입어 성소에 들어갈 담력을 얻었나니"}, {"v": "20", "t": "그 길은 우리를 위하여 휘장 가운데로 열어 놓으신 새로운 살 길이요 휘장은 곧 그의 육체니라"}]}], "mhk": [{"ref": "출26:33-34", "book": "출애굽기", "verses": [{"v": "33", "t": "그 휘장을 갈고리 아래에 늘어뜨린 후에 증거궤를 그 휘장 안에 들여놓으라 그 휘장이 너희를 위하여 성소와 지성소를 구분하리라"}, {"v": "34", "t": "너는 지성소에 있는 증거궤 위에 속죄소를 두고"}]}, {"ref": "레16:2", "book": "레위기", "verses": [{"v": "2", "t": "여호와께서 모세에게 이르시되 네 형 아론에게 이르라 성소의 휘장 안 법궤 위 속죄소 앞에 아무 때나 들어오지 말라 그리하여 죽지 않도록 하라 이는 내가 구름 가운데에서 속죄소 위에 나타남이니라"}]}, {"ref": "히9:3-4", "book": "히브리서", "verses": [{"v": "3", "t": "또 둘째 휘장 뒤에 있는 장막을 지성소라 일컫나니"}, {"v": "4", "t": "금 향로와 사면을 금으로 싼 언약궤가 있고 그 안에 만나를 담은 금 항아리와 아론의 싹난 지팡이와 언약의 돌판들이 있고"}]}], "ark": [{"ref": "출25:10-11", "book": "출애굽기", "verses": [{"v": "10", "t": "그들은 조각목으로 궤를 짜되 길이는 두 규빗 반, 너비는 한 규빗 반, 높이는 한 규빗 반이 되게 하고"}, {"v": "11", "t": "너는 순금으로 그것을 싸되 그 안팎을 싸고 위쪽 가장자리로 돌아가며 금 테를 두르고"}]}, {"ref": "출25:21-22", "book": "출애굽기", "verses": [{"v": "21", "t": "속죄소를 궤 위에 얹고 내가 네게 줄 증거판을 궤 속에 넣으라"}, {"v": "22", "t": "거기서 내가 너와 만나고 속죄소 위 곧 증거궤 위에 있는 두 그룹 사이에서 내가 이스라엘 자손을 위하여 네게 명령할 모든 일을 네게 이르리라"}]}, {"ref": "히9:4", "book": "히브리서", "verses": [{"v": "4", "t": "금 향로와 사면을 금으로 싼 언약궤가 있고 그 안에 만나를 담은 금 항아리와 아론의 싹난 지팡이와 언약의 돌판들이 있고"}]}], "mercy": [{"ref": "출25:17-18", "book": "출애굽기", "verses": [{"v": "17", "t": "순금으로 속죄소를 만들되 길이는 두 규빗 반, 너비는 한 규빗 반이 되게 하고"}, {"v": "18", "t": "금으로 그룹 둘을 속죄소 두 끝에 쳐서 만들되"}]}, {"ref": "출25:22", "book": "출애굽기", "verses": [{"v": "22", "t": "거기서 내가 너와 만나고 속죄소 위 곧 증거궤 위에 있는 두 그룹 사이에서 내가 이스라엘 자손을 위하여 네게 명령할 모든 일을 네게 이르리라"}]}, {"ref": "레16:14-15", "book": "레위기", "verses": [{"v": "14", "t": "그는 또 수송아지의 피를 가져다가 손가락으로 속죄소 동쪽에 뿌리고 또 손가락으로 그 피를 속죄소 앞에 일곱 번 뿌릴 것이며"}, {"v": "15", "t": "또 백성을 위한 속죄제 염소를 잡아 그 피를 가지고 휘장 안에 들어가서 그 수송아지 피로 행함 같이 그 피로 행하여 속죄소 위와 속죄소 앞에 뿌릴지니"}]}, {"ref": "롬3:25", "book": "로마서", "verses": [{"v": "25", "t": "이 예수를 하나님이 그의 피로써 믿음으로 말미암는 화목제물로 세우셨으니 이는 하나님께서 길이 참으시는 중에 전에 지은 죄를 간과하심으로 자기의 의로우심을 나타내려 하심이니"}]}], "tent": [{"ref": "출26:7", "book": "출애굽기", "verses": [{"v": "7", "t": "그 성막을 덮는 막 곧 휘장을 염소털로 만들되 열한 폭을 만들지며"}]}, {"ref": "출40:34-35", "book": "출애굽기", "verses": [{"v": "34", "t": "구름이 회막에 덮이고 여호와의 영광이 성막에 충만하매"}, {"v": "35", "t": "모세가 회막에 들어갈 수 없었으니 이는 구름이 회막 위에 덮이고 여호와의 영광이 성막에 충만함이었으며"}]}]};
+
+
+</script>
+<script>
+
+// ── 제사장 직무 ──
+const DUTIES = [
+  { k:'duty_sacrifice', name:'제사 드림', icon:'flame',
+    desc:'백성이 끌고 온 제물의 피를 받아 제단 사방에 뿌리고 각을 떠서 불사른다. 제단의 불은 꺼뜨리지 않고 아침마다 나무를 태워 계속 피워 두어야 했다.',
+    where:'뜰 · 번제단',
+    type:'단번의 제사로 영원히 온전하게 하신 그리스도. 반복되던 제사가 그분 안에서 끝났다.' },
+  { k:'duty_lamp', name:'등불 관리', icon:'lamp',
+    desc:'감람을 찧어 낸 순수한 기름으로 저녁부터 아침까지 등불을 꺼지지 않게 손질한다. 심지를 다듬고 기름을 채우는 일이 아침저녁의 일과였다.',
+    where:'성소 · 등잔대',
+    type:'교회 가운데 다니시며 등불을 살피시는 주님. 빛은 사람이 만드는 것이 아니라 지키는 것이다.' },
+  { k:'duty_bread', name:'진설병 교체', icon:'bread',
+    desc:'고운 가루로 구운 떡 열두 개를 두 줄로 차리고 정결한 유향을 얹는다. 안식일마다 새 떡으로 바꾸었고, 물린 떡은 거룩한 곳에서 제사장이 먹었다.',
+    where:'성소 · 진설병 상',
+    type:'생명의 떡이신 그리스도. 열두 지파가 늘 하나님 앞에 기억되듯 그분이 우리를 아버지 앞에 두신다.' },
+  { k:'duty_incense', name:'분향', icon:'smoke',
+    desc:'아침에 등불을 손질할 때와 저녁에 등불을 켤 때, 곧 하루 두 차례 향단에 거룩한 향을 사른다. 번제단의 불을 옮겨 와야만 향을 피울 수 있었다.',
+    where:'성소 · 분향단',
+    type:'항상 살아서 우리를 위해 간구하시는 그리스도의 중보. 기도는 제단의 불에 근거해 올라간다.' },
+  { k:'duty_teach', name:'가르침과 분별', icon:'book',
+    desc:'거룩한 것과 속된 것, 부정한 것과 정한 것을 분별하여 백성에게 여호와의 모든 규례를 가르친다. 제사장의 입술은 지식을 지켜야 했다.',
+    where:'진 전체',
+    type:'우리의 선지자 되신 그리스도. 그분이 아버지를 나타내 보이셨다.' },
+  { k:'duty_atone', name:'속죄 (대제사장)', icon:'blood',
+    desc:'속죄일에 대제사장이 세마포 옷을 입고 피를 가지고 지성소에 들어가 속죄소 위와 앞에 일곱 번 뿌린다. 성소와 회막과 제단과 온 백성을 위해 속죄한다.',
+    where:'지성소',
+    type:'자기 피를 가지고 단번에 하늘 성소에 들어가사 영원한 속죄를 이루신 대제사장 그리스도.' },
+  { k:'duty_bless', name:'축복 선포', icon:'hands',
+    desc:'여호와께서 정하신 말로 이스라엘 자손을 축복한다 — 지키시고, 얼굴을 비추시고, 평강 주시기를 구하는 세 겹의 복.',
+    where:'회막 앞',
+    type:'손을 들어 제자들을 축복하시며 하늘로 올려지신 주님.' }
+];
+
+// ── 대제사장 의복 (출 28장) ──
+const ROBES = [
+  { k:'rb_ephod', name:'에봇', en:'EPHOD', pos:'몸통',
+    material:'금 실과 청색·자색·홍색 실, 가늘게 꼰 베 실로 정교하게 짬',
+    desc:'어깨받이 둘로 앞뒤를 잇고 정교한 띠로 매는 겉옷. 두 어깨에는 호마노 두 개를 금 테에 물려, 이스라엘 열두 지파의 이름을 여섯씩 새겼다.',
+    meaning:'대제사장이 열두 지파의 이름을 어깨에 메고 나아간다. 어깨는 짊어짐의 자리 — 그가 온 백성을 지고 하나님 앞에 섰다.',
+    type:'자기 백성을 어깨로 지시는 그리스도. 잃은 양을 찾으면 어깨에 메고 돌아오신다.' },
+  { k:'rb_breast', name:'흉패', en:'BREASTPIECE', pos:'가슴',
+    material:'에봇과 같은 재료로 한 뼘 네모 반듯하게 겹쳐 짬. 금 사슬로 에봇에 맴',
+    desc:'네 줄에 걸쳐 열두 보석을 물리고, 각 보석에 이스라엘 열두 지파의 이름을 새겼다. 판결 흉패라고도 불린다.',
+    meaning:'어깨에 이어 이번엔 가슴이다. 능력으로 지실 뿐 아니라 사랑으로 품으신다. 각 지파가 서로 다른 보석으로 새겨진 것은 각 사람이 그분께 따로 귀하다는 뜻이다.',
+    type:'우리 이름을 가슴에 품고 하나님 앞에 서 계신 대제사장. 그 사랑에서 끊을 자가 없다.' },
+  { k:'rb_urim', name:'우림과 둠밈', en:'URIM & THUMMIM', pos:'흉패 안',
+    material:'성경은 재료를 밝히지 않음',
+    desc:'판결 흉패 안에 넣어 대제사장이 여호와 앞에 들어갈 때 그 가슴 위에 두었다. 하나님의 뜻을 묻고 판결을 받는 데 쓰였다.',
+    meaning:'지도자의 판단이 아니라 하나님의 뜻이 백성을 이끌어야 했다. 대제사장은 자기 의견이 아니라 받은 답을 전했다.',
+    type:'아버지의 뜻을 온전히 알고 행하신 그리스도. 그분 안에 지혜와 지식의 모든 보화가 감추어져 있다.' },
+  { k:'rb_robe', name:'에봇 받침 겉옷', en:'ROBE OF THE EPHOD', pos:'속',
+    material:'전부 청색으로 짜고, 갑옷 깃 같은 깃을 만들어 찢어지지 않게 함',
+    desc:'가장자리에 청색·자색·홍색 실로 석류를 수놓고 그 사이사이에 금 방울을 달았다. 대제사장이 성소에 들어가고 나올 때 그 소리가 들려야 죽지 않았다.',
+    meaning:'방울 소리는 그가 살아서 섬기고 있다는 증거였다. 밖에서 기다리는 백성은 소리로 그의 사역을 확인했다.',
+    type:'하늘에서 지금도 우리를 위해 살아 섬기시는 대제사장. 청색은 하늘에 속하심을 나타낸다.' },
+  { k:'rb_plate', name:'금패 (성패)', en:'GOLDEN PLATE', pos:'이마',
+    material:'순금으로 만들고 청색 끈으로 관 전면에 맴',
+    desc:'도장을 새기듯 "여호와께 성결"이라 새겨 관 위 이마에 달았다. 이스라엘 자손이 드리는 성물의 죄를 대제사장이 담당하여, 그 예물이 받으심이 되게 했다.',
+    meaning:'가장 정성껏 드린 예물에도 흠이 있다. 그 흠을 대제사장의 이마에 새겨진 거룩이 덮어 주었다.',
+    type:'우리의 불완전한 예배를 자기 거룩으로 받으실 만하게 만드시는 그리스도.' },
+  { k:'rb_tunic', name:'반포 속옷과 관·띠', en:'TUNIC · TURBAN · SASH', pos:'기본',
+    material:'가는 베 실로 반포(격자무늬)로 짜고, 관도 세마포로, 띠는 수놓아 만듦',
+    desc:'대제사장과 일반 제사장이 함께 입은 기본 복장. 아론의 아들들에게도 속옷과 띠와 관을 만들어 영화롭고 아름답게 했다.',
+    meaning:'섬기는 자에게 하나님이 친히 옷을 지어 입히셨다. 제사장의 위엄은 스스로 갖춘 것이 아니라 입혀진 것이다.',
+    type:'우리에게 의의 옷을 입히시는 그리스도. 우리 의는 우리가 지은 것이 아니다.' },
+  { k:'rb_linen', name:'세마포 속바지', en:'LINEN UNDERGARMENT', pos:'속',
+    material:'세마포. 허리에서 두 넓적다리까지 이르게 함',
+    desc:'회막에 들어갈 때나 제단에 가까이할 때 반드시 입어야 했다. 입지 않으면 죄를 지어 죽는다는 규례가 붙어 있었다.',
+    meaning:'섬김에는 감추어진 정결까지 요구된다. 사람이 보지 않는 부분이 하나님 앞에서는 드러난다.',
+    type:'속사람의 거룩까지 온전하셨던 그리스도. 겉과 속이 다르지 않은 섬김.' }
+];
+
+// ── 계보 ──
+const LINE = [
+  { k:'p_aaron', gen:'제1대', name:'아론', era:'출애굽 ~ 광야 40년',
+    note:'모세의 형이며 최초의 대제사장. 하나님이 부르시고 기름 부어 세우셨으며, 아무도 스스로 이 영광을 취하지 못했다. 호르산에서 옷을 벗고 죽었다.',
+    tag:'최초의 대제사장' },
+  { k:'p_nadab', gen:'아론의 아들', name:'나답과 아비후', era:'광야',
+    note:'아론의 두 맏아들. 여호와께서 명령하지 않으신 다른 불을 향로에 담아 분향하다가 여호와 앞에서 불에 삼켜져 죽었고, 자식이 없었다.',
+    tag:'다른 불 · 요절', warn:true },
+  { k:'p_eleazar', gen:'제2대', name:'엘르아살', era:'광야 ~ 가나안 정복',
+    note:'아론의 셋째 아들. 호르산에서 아버지의 옷을 물려 입고 대제사장직을 이었다. 여호수아와 함께 땅을 분배했다.',
+    tag:'직임을 이어받음' },
+  { k:'p_phinehas', gen:'제3대', name:'비느하스', era:'광야 말기 ~ 사사 시대 초',
+    note:'엘르아살의 아들. 브올의 죄악 중에 하나님의 질투로 질투하여 이스라엘을 속죄했고, 그와 그 후손에게 영원한 제사장 직분의 언약이 주어졌다.',
+    tag:'평화의 언약' },
+  { k:'p_eli', gen:'사사 시대', name:'엘리', era:'사사 시대 말 · 실로',
+    note:'실로에서 섬긴 제사장이자 사사. 두 아들 홉니와 비느하스가 행실이 나빠 여호와를 알지 못했고, 언약궤를 빼앗겼다는 소식에 엘리도 목이 부러져 죽었다.',
+    tag:'이다말 계열 · 심판', warn:true },
+  { k:'p_zadok', gen:'왕정 시대', name:'사독', era:'다윗 ~ 솔로몬',
+    note:'솔로몬이 아비아달을 물리치고 사독을 그 자리에 세워, 제사장직이 엘르아살 계열로 돌아왔다. 에스겔은 사독의 자손이 성소 직분을 지켰다고 기록한다.',
+    tag:'엘르아살 계열 회복' },
+  { k:'p_jeshua', gen:'포로 귀환', name:'예수아 (여호수아)', era:'포로 귀환 후',
+    note:'스알디엘의 아들 스룹바벨과 함께 제단을 쌓고 성전을 재건한 대제사장. 스가랴의 환상에서 더러운 옷이 벗겨지고 아름다운 옷으로 갈아입혀진다.',
+    tag:'성전 재건' },
+  { k:'p_christ', gen:'영원한', name:'예수 그리스도', era:'멜기세덱의 반차',
+    note:'하늘에 올라가신 큰 대제사장. 우리의 연약함을 동정하지 못하실 이가 아니라 모든 일에 우리와 똑같이 시험을 받으셨으나 죄는 없으시다. 영원히 계시므로 제사장 직분도 갈리지 않으며, 자기를 힘입어 나아가는 자들을 온전히 구원하신다.',
+    tag:'영원한 대제사장', christ:true }
+];
+
+
+</script>
+<script>
+
+const PSCRIPT = {"duty_sacrifice": [{"ref": "레1:5", "book": "레위기", "verses": [{"v": "5", "t": "그는 여호와 앞에서 그 수송아지를 잡을 것이요 아론의 자손 제사장들은 그 피를 가져다가 회막 문 앞 제단 사방에 뿌릴 것이며"}]}, {"ref": "레6:12-13", "book": "레위기", "verses": [{"v": "12", "t": "제단 위의 불은 항상 피워 꺼지지 않게 할지니 제사장은 아침마다 나무를 그 위에서 태우고 번제물을 그 위에 벌여 놓고 화목제의 기름을 그 위에서 불사를지며"}, {"v": "13", "t": "불은 끊임이 없이 제단 위에 피워 꺼지지 않게 할지니라"}]}], "duty_lamp": [{"ref": "출27:20-21", "book": "출애굽기", "verses": [{"v": "20", "t": "너는 또 이스라엘 자손에게 명령하여 감람으로 짠 순수한 기름을 등불을 위하여 네게로 가져오게 하고 끊이지 않게 등불을 켜되"}, {"v": "21", "t": "아론과 그의 아들들로 회막 안 증거궤 앞 휘장 밖에서 저녁부터 아침까지 항상 여호와 앞에 그 등불을 보살피게 하라 이는 이스라엘 자손이 대대로 지킬 규례이니라"}]}, {"ref": "레24:3", "book": "레위기", "verses": [{"v": "3", "t": "아론은 회막안 증거궤 휘장 밖에서 저녁부터 아침까지 여호와 앞에 항상 등잔불을 정리할지니 이는 너희 대대로 지킬 영원한 규례라"}]}], "duty_bread": [{"ref": "레24:5-8", "book": "레위기", "verses": [{"v": "5", "t": "너는 고운 가루를 가져다가 떡 열두 개를 굽되 각 덩이를 십분의 이 에바로 하여"}, {"v": "6", "t": "여호와 앞 순결한 상 위에 두 줄로 한 줄에 여섯씩 진설하고"}, {"v": "7", "t": "너는 또 정결한 유향을 그 각 줄 위에 두어 기념물로 여호와께 화제를 삼을 것이며"}, {"v": "8", "t": "안식일마다 이 떡을 여호와 앞에 항상 진설할지니 이는 이스라엘 자손을 위한 것이요 영원한 언약이니라"}]}], "duty_incense": [{"ref": "출30:7-8", "book": "출애굽기", "verses": [{"v": "7", "t": "아론이 아침마다 그 위에 향기로운 향을 사르되 등불을 손질할 때에 사를지며"}, {"v": "8", "t": "또 저녁 때 등불을 켤 때에 사를지니 이 향은 너희가 대대로 여호와 앞에 끊지 못할지며"}]}], "duty_teach": [{"ref": "레10:10-11", "book": "레위기", "verses": [{"v": "10", "t": "그리하여야 너희가 거룩하고 속된 것을 분별하며 부정하고 정한 것을 분별하고"}, {"v": "11", "t": "또 나 여호와가 모세를 통하여 모든 규례를 이스라엘 자손에게 가르치리라"}]}, {"ref": "말2:7", "book": "말", "verses": [{"v": "7", "t": "제사장의 입술은 지식을 지켜야 하겠고 사람들은 그의 입에서 율법을 구하게 되어야 할 것이니 제사장은 만군의 여호와의 사자가 됨이거늘"}]}], "duty_atone": [{"ref": "레16:32-34", "book": "레위기", "verses": [{"v": "32", "t": "기름 부음을 받고 위임되어 자기의 아버지를 대신하여 제사장의 직분을 행하는 제사장은 속죄하되 세마포 옷 곧 거룩한 옷을 입고"}, {"v": "33", "t": "지성소를 속죄하며 회막과 제단을 속죄하고 또 제사장들과 백성의 회중을 위하여 속죄할지니"}, {"v": "34", "t": "이는 너희가 영원히 지킬 규례라 이스라엘 자손의 모든 죄를 위하여 일 년에 한 번 속죄할 것이니라 아론이 여호와께서 모세에게 명령하신 대로 행하니라"}]}], "duty_bless": [{"ref": "민6:23-26", "book": "민수기", "verses": [{"v": "23", "t": "아론과 그의 아들들에게 말하여 이르기를 너희는 이스라엘 자손을 위하여 이렇게 축복하여 이르되"}, {"v": "24", "t": "여호와는 네게 복을 주시고 너를 지키시기를 원하며"}, {"v": "25", "t": "여호와는 그의 얼굴을 네게 비추사 은혜 베푸시기를 원하며"}, {"v": "26", "t": "여호와는 그 얼굴을 네게로 향하여 드사 평강 주시기를 원하노라 할지니라 하라"}]}], "rb_ephod": [{"ref": "출28:6-8", "book": "출애굽기", "verses": [{"v": "6", "t": "그들이 금 실과 청색 자색 홍색 실과 가늘게 꼰 베 실로 정교하게 짜서 에봇을 짓되"}, {"v": "7", "t": "그것에 어깨받이 둘을 달아 그 두 끝을 이어지게 하고"}, {"v": "8", "t": "에봇 위에 매는 띠는 에봇 짜는 법으로 금 실과 청색 자색 홍색 실과 가늘게 꼰 베 실로 에봇에 정교하게 붙여 짤지며"}]}], "rb_breast": [{"ref": "출28:15-21", "book": "출애굽기", "verses": [{"v": "15", "t": "너는 판결 흉패를 에봇 짜는 방법으로 금 실과 청색 자색 홍색 실과 가늘게 꼰 베 실로 정교하게 짜서 만들되"}, {"v": "16", "t": "길이와 너비가 한 뼘씩 두 겹으로 네모 반듯하게 하고"}, {"v": "17", "t": "그것에 네 줄로 보석을 물리되 첫 줄은 홍보석 황옥 녹주옥이요"}, {"v": "18", "t": "둘째 줄은 석류석 남보석 홍마노요"}, {"v": "19", "t": "셋째 줄은 호박 백마노 자수정이요"}, {"v": "20", "t": "넷째 줄은 녹보석 호마노 벽옥으로 다 금 테에 물릴지니"}, {"v": "21", "t": "이 보석들은 이스라엘 아들들의 이름대로 열둘이라 보석마다 열두 지파의 한 이름씩 도장을 새기는 법으로 새기고"}]}], "rb_urim": [{"ref": "출28:30", "book": "출애굽기", "verses": [{"v": "30", "t": "너는 우림과 둠밈을 판결 흉패 안에 넣어 아론이 여호와 앞에 들어갈 때에 그의 가슴에 붙이게 하라 아론은 여호와 앞에서 이스라엘 자손의 흉패를 항상 그의 가슴에 붙일지니라"}]}], "rb_robe": [{"ref": "출28:31-35", "book": "출애굽기", "verses": [{"v": "31", "t": "너는 에봇 받침 겉옷을 전부 청색으로 하되"}, {"v": "32", "t": "두 어깨 사이에 머리 들어갈 구멍을 내고 그 주위에 갑옷 깃 같이 깃을 짜서 찢어지지 않게 하고"}, {"v": "33", "t": "그 옷 가장자리로 돌아가며 청색 자색 홍색 실로 석류를 수 놓고 금 방울을 간격을 두어 달되"}, {"v": "34", "t": "그 옷 가장자리로 돌아가며 한 금 방울, 한 석류, 한 금 방울, 한 석류가 있게 하라"}, {"v": "35", "t": "아론이 입고 여호와를 섬기러 성소에 들어갈 때와 성소에서 나올 때에 그 소리가 들릴 것이라 그리하면 그가 죽지 아니하리라"}]}], "rb_plate": [{"ref": "출28:36-38", "book": "출애굽기", "verses": [{"v": "36", "t": "너는 또 순금으로 패를 만들어 도장을 새기는 법으로 그 위에 새기되 '여호와께 성결'이라 하고"}, {"v": "37", "t": "그 패를 청색 끈으로 관 위에 매되 곧 관 전면에 있게 하라"}, {"v": "38", "t": "이 패를 아론의 이마에 두어 그가 이스라엘 자손이 거룩하게 드리는 성물과 관련된 죄책을 담당하게 하라 그 패가 아론의 이마에 늘 있으므로 그 성물을 여호와께서 받으시게 되리라"}]}], "rb_tunic": [{"ref": "출28:39-40", "book": "출애굽기", "verses": [{"v": "39", "t": "너는 가는 베 실로 반포 속옷을 짜고 가는 베 실로 관을 만들고 띠를 수 놓아 만들지니라"}, {"v": "40", "t": "너는 아론의 아들들을 위하여 속옷을 만들며 그들을 위하여 띠를 만들며 그들을 위하여 관을 만들어 영화롭고 아름답게 하되"}]}], "rb_linen": [{"ref": "출28:42-43", "book": "출애굽기", "verses": [{"v": "42", "t": "또 그들을 위하여 베로 속바지를 만들어 허리에서부터 두 넓적다리까지 이르게 하여 하체를 가리게 하라"}, {"v": "43", "t": "아론과 그의 아들들이 회막에 들어갈 때에나 제단에 가까이 하여 거룩한 곳에서 섬길 때에 그것들을 입어야 죄를 짊어진 채 죽지 아니하리니 그와 그의 후손이 영원히 지킬 규례니라"}]}], "p_aaron": [{"ref": "출28:1", "book": "출애굽기", "verses": [{"v": "1", "t": "너는 이스라엘 자손 중 네 형 아론과 그의 아들들 곧 아론과 아론의 아들들 나답과 아비후와 엘르아살과 이다말을 그와 함께 네게로 나아오게 하여 나를 섬기는 제사장 직분을 행하게 하되"}]}, {"ref": "히5:4", "book": "히브리서", "verses": [{"v": "4", "t": "이 존귀는 아무도 스스로 취하지 못하고 오직 아론과 같이 하나님의 부르심을 받은 자라야 할 것이니라"}]}], "p_nadab": [{"ref": "레10:1-2", "book": "레위기", "verses": [{"v": "1", "t": "아론의 아들 나답과 아비후가 각기 향로를 가져다가 여호와께서 명령하시지 아니하신 다른 불을 담아 여호와 앞에 분향하였더니"}, {"v": "2", "t": "불이 여호와 앞에서 나와 그들을 삼키매 그들이 여호와 앞에서 죽은지라"}]}], "p_eleazar": [{"ref": "민20:26-28", "book": "민수기", "verses": [{"v": "26", "t": "아론의 옷을 벗겨 그의 아들 엘르아살에게 입히라 아론은 거기서 죽어 그 조상에게로 돌아가리라"}, {"v": "27", "t": "모세가 여호와의 명령을 따라 그들과 함께 회중의 목전에서 호르 산에 오르니라"}, {"v": "28", "t": "모세가 아론의 옷을 벗겨 그의 아들 엘르아살에게 입히매 아론이 그 산 꼭대기에서 죽으니라 모세와 엘르아살이 산에서 내려오니"}]}], "p_phinehas": [{"ref": "민25:11-13", "book": "민수기", "verses": [{"v": "11", "t": "제사장 아론의 손자 엘르아살의 아들 비느하스가 내 질투심으로 질투하여 이스라엘 자손 중에서 내 노를 돌이켜서 내 질투심으로 그들을 소멸하지 않게 하였도다"}, {"v": "12", "t": "그러므로 말하라 내가 그에게 내 평화의 언약을 주리니"}, {"v": "13", "t": "그와 그의 후손에게 영원한 제사장 직분의 언약이라 그가 그의 하나님을 위하여 질투하여 이스라엘 자손을 속죄하였음이니라"}]}], "p_eli": [{"ref": "삼상2:12", "book": "사무엘상", "verses": [{"v": "12", "t": "엘리의 아들들은 행실이 나빠 여호와를 알지 못하더라"}]}, {"ref": "삼상4:18", "book": "사무엘상", "verses": [{"v": "18", "t": "하나님의 궤를 말할 때에 엘리가 자기 의자에서 뒤로 넘어져 문 곁에서 목이 부러져 죽었으니 나이가 많고 비대한 까닭이라 그가 이스라엘의 사사가 된 지 사십 년이었더라"}]}], "p_zadok": [{"ref": "왕상2:35", "book": "열왕기상", "verses": [{"v": "35", "t": "왕이 이에 여호야다의 아들 브나야를 요압을 대신하여 군사령관으로 삼고 또 제사장 사독으로 아비아달을 대신하게 하니라"}]}, {"ref": "겔44:15", "book": "겔", "verses": [{"v": "15", "t": "이스라엘 족속이 그릇 행하여 나를 떠날 때에 사독의 자손 레위 사람 제사장들은 내 성소의 직분을 지켰은즉 그들은 내게 가까이 나아와 수종을 들되 내 앞에 서서 기름과 피를 내게 드릴지니라 주 여호와의 말씀이니라"}]}], "p_jeshua": [{"ref": "스3:2", "book": "에스라", "verses": [{"v": "2", "t": "요사닥의 아들 예수아와 그의 형제 제사장들과 스알디엘의 아들 스룹바벨과 그의 형제들이 다 일어나 이스라엘 하나님의 제단을 만들고 하나님의 사람 모세의 율법에 기록한 대로 번제를 그 위에서 드리려 할새"}]}, {"ref": "슥3:1", "book": "스가랴", "verses": [{"v": "1", "t": "대제사장 여호수아는 여호와의 천사 앞에 섰고 사탄은 그의 오른쪽에 서서 그를 대적하는 것을 여호와께서 내게 보이시니라"}]}], "p_christ": [{"ref": "히4:14-15", "book": "히브리서", "verses": [{"v": "14", "t": "그러므로 우리에게 큰 대제사장이 계시니 승천하신 이 곧 하나님의 아들 예수시라 우리가 믿는 도리를 굳게 잡을지어다"}, {"v": "15", "t": "우리에게 있는 대제사장은 우리의 연약함을 동정하지 못하실 이가 아니요 모든 일에 우리와 똑같이 시험을 받으신 이로되 죄는 없으시니라"}]}, {"ref": "히7:24-25", "book": "히브리서", "verses": [{"v": "24", "t": "예수는 영원히 계시므로 그 제사장 직분도 갈리지 아니하느니라"}, {"v": "25", "t": "그러므로 자기를 힘입어 하나님께 나아가는 자들을 온전히 구원하실 수 있으니 이는 그가 항상 살아 계셔서 그들을 위하여 간구하심이라"}]}]};
+
+</script>
+<script>
+// ══════════ 투영 ══════════
+let YAW = 0, PITCH = 36, SCALE = 6.34;
+const CX=50, CY=25, OX=380, OY=321;
+// 매 프레임 화면에 꽉 맞게 축척/원점 재계산 (pitch 전 범위 대응)
+let _S=SCALE, _OX=OX, _OY=OY;
+function computeFit(){
+  const VW=760, VH=640, PAD=40;
+  const sign=PITCH<0?-1:1, pp=Math.abs(PITCH)*Math.PI/180;
+  const sinP=Math.sin(pp), cosP=Math.cos(pp), r=YAW*Math.PI/180;
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+  const t=[[0,0,0],[100,0,0],[100,50,0],[0,50,0],[100,0,5],[100,50,5],[0,50,5],[0,0,5],
+           [50,25,11.6],[50,20,10],[80,30,10],[-9,25,0],[109,25,0],[50,-9,0],[50,59,0]];
+  t.forEach(q=>{
+    const dx=q[0]-CX,dy=q[1]-CY;
+    const rx=dx*Math.cos(r)-dy*Math.sin(r), ry=dx*Math.sin(r)+dy*Math.cos(r);
+    const X=rx, Y=sign*ry*sinP - q[2]*cosP;
+    x0=Math.min(x0,X);x1=Math.max(x1,X);y0=Math.min(y0,Y);y1=Math.max(y1,Y);
+  });
+  const w=x1-x0, h=y1-y0;
+  _S=Math.min((VW-PAD*2)/w,(VH-PAD*2)/h);
+  _OX=PAD-x0*_S+((VW-PAD*2)-w*_S)/2;
+  _OY=PAD-y0*_S+((VH-PAD*2)-h*_S)/2;
+}
+function P(x,y,z){
+  z=z||0;
+  const dx=x-CX, dy=y-CY, r=YAW*Math.PI/180;
+  const rx=dx*Math.cos(r)-dy*Math.sin(r);
+  const ry=dx*Math.sin(r)+dy*Math.cos(r);
+  const sign=PITCH<0?-1:1, pp=Math.abs(PITCH)*Math.PI/180;
+  return [_OX+rx*_S, _OY+sign*ry*_S*Math.sin(pp)-z*_S*Math.cos(pp)];
+}
+function depth(x,y){
+  const dx=x-CX, dy=y-CY, r=YAW*Math.PI/180;
+  const sign=PITCH<0?-1:1;
+  return sign*(dx*Math.sin(r)+dy*Math.cos(r));
+}
+function pts(a){ return a.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' '); }
+const NS="http://www.w3.org/2000/svg";
+function el(t,a,p){ const e=document.createElementNS(NS,t); for(const k in a) e.setAttribute(k,a[k]); if(p) p.appendChild(e); return e; }
+function box(g,x,y,w,d,h,cT,cL,cR,extra){
+  const T=[P(x,y,h),P(x+w,y,h),P(x+w,y+d,h),P(x,y+d,h)];
+  const B=[P(x,y,0),P(x+w,y,0),P(x+w,y+d,0),P(x,y+d,0)];
+  [{p:[B[0],B[1],T[1],T[0]],d:depth(x+w/2,y),c:cL},
+   {p:[B[1],B[2],T[2],T[1]],d:depth(x+w,y+d/2),c:cR},
+   {p:[B[2],B[3],T[3],T[2]],d:depth(x+w/2,y+d),c:cL},
+   {p:[B[3],B[0],T[0],T[3]],d:depth(x,y+d/2),c:cR}]
+   .sort((a,b)=>b.d-a.d)
+   .forEach(f=>el('polygon',Object.assign({points:pts(f.p),fill:f.c},extra||{}),g));
+  el('polygon',Object.assign({points:pts(T),fill:cT},extra||{}),g);
+}
+
+// ══════════ 조감도 ══════════
+function buildScene(){
+  computeFit();
+  const svg=document.getElementById('scene');
+  const old=svg.querySelector('#stage'); if(old) old.remove();
+  const stage=el('g',{id:'stage'},svg);
+  const gG=el('g',{},stage), gI=el('g',{},stage), gL=el('g',{},stage);
+  el('polygon',{points:pts([P(0,0),P(100,0),P(100,50),P(0,50)]),
+    fill:'#241f19','fill-opacity':'1',stroke:'#3a332b','stroke-width':'1'},gG);
+
+  const LOD = dragging ? 0.5 : 1;
+  const N = (v)=>Math.max(2,Math.round(v*LOD));
+  [{x0:0,y0:0,x1:100,y1:0,n:N(20),d:depth(50,0)},
+   {x0:100,y0:0,x1:100,y1:50,n:N(10),d:depth(100,25)},
+   {x0:100,y0:50,x1:0,y1:50,n:N(20),d:depth(50,50)},
+   {x0:0,y0:50,x1:0,y1:35,n:N(3),d:depth(0,42)},
+   {x0:0,y0:15,x1:0,y1:0,n:N(3),d:depth(0,7)}]
+  .sort((a,b)=>b.d-a.d).forEach(w=>{
+    for(let i=0;i<w.n;i++){
+      const t0=i/w.n,t1=(i+1)/w.n;
+      const ax=w.x0+(w.x1-w.x0)*t0, ay=w.y0+(w.y1-w.y0)*t0;
+      const bx=w.x0+(w.x1-w.x0)*t1, by=w.y0+(w.y1-w.y0)*t1;
+      const A=P(ax,ay,0),B=P(bx,by,0),At=P(ax,ay,5),Bt=P(bx,by,5);
+      el('polygon',{points:pts([A,B,Bt,At]),fill:'#e8e2d4','fill-opacity':'.9',
+        stroke:'#c9c0ac','stroke-width':'.55'},gG);
+      el('line',{x1:A[0],y1:A[1],x2:At[0],y2:At[1],stroke:'#8a7f6a','stroke-width':'1.3'},gG);
+    }
+  });
+  (function(){
+    const cols=['#3f6fa8','#7a4f96','#b23a3a','#e8e2d4'];
+    for(let i=0;i<8;i++){
+      const a=15+20*i/8, b=15+20*(i+1)/8;
+      el('polygon',{points:pts([P(0,a,0),P(0,b,0),P(0,b,5),P(0,a,5)]),fill:cols[i%4],
+        'fill-opacity':'.94',stroke:'#2a2520','stroke-width':'.4',class:'hot','data-k':'gate'},gG);
+    }
+  })();
+
+  [{d:depth(22.5,25),draw:drawAltar},{d:depth(36,25),draw:drawLaver},{d:depth(65,25),draw:drawTent}]
+    .sort((a,b)=>b.d-a.d).forEach(o=>o.draw(gI));
+
+  if(!dragging) buildLabels(gL);
+  bindHits(svg);
+}
+// 도형/라벨 클릭 — 드래그가 아니었을 때만 발동
+function bindHits(scope){
+  scope.querySelectorAll('.hot,.lbl').forEach(n=>{
+    if(n.dataset.bound) return;
+    n.dataset.bound='1';
+    n.style.cursor='pointer';
+    const fire=e=>{ if(dragged||dragging) return; e.stopPropagation(); zoomTo(n.dataset.k); };
+    n.addEventListener('click',fire);
+  });
+}
+function drawAltar(gI){
+  const g=el('g',{class:'hot','data-k':'altar'},gI);
+  box(g,20,22.5,5,5,3,'#b5762e','#7d4f1d','#95601f');
+  [[20,22.5],[25,22.5],[25,27.5],[20,27.5]].forEach(([hx,hy])=>{
+    const a=P(hx,hy,3),b=P(hx,hy,4.2);
+    el('line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:'#c98c3a','stroke-width':'2.4','stroke-linecap':'round'},g);
+  });
+  el('polygon',{points:pts([P(20.6,23.1,3.06),P(24.4,23.1,3.06),P(24.4,26.9,3.06),P(20.6,26.9,3.06)]),
+    fill:'#4a3520',stroke:'#2c2015','stroke-width':'.6'},g);
+}
+function drawLaver(gI){
+  const g=el('g',{class:'hot','data-k':'laver'},gI);
+  const b=P(36,25,0), t=P(36,25,2.6);
+  el('ellipse',{cx:b[0],cy:b[1],rx:8,ry:3.8,fill:'#7d4f1d'},g);
+  el('polygon',{points:pts([P(35.5,24.5,0),P(36.5,25.5,0),P(36.5,25.5,2.2),P(35.5,24.5,2.2)]),fill:'#95601f'},g);
+  el('ellipse',{cx:t[0],cy:t[1]-2,rx:10,ry:5,fill:'#b5762e',stroke:'#8a5a22','stroke-width':'.9'},g);
+  el('ellipse',{cx:t[0],cy:t[1]-2.8,rx:7.4,ry:3.5,fill:'#5d86a6'},g);
+}
+function drawTent(gI){
+  const gM=el('g',{class:'hot','data-k':'mhk'},gI);
+  box(gM,70,20,10,10,10,'#6d4526','#43291a','#553520');
+  const gH=el('g',{class:'hot','data-k':'holy'},gI);
+  box(gH,50,20,20,10,10,'#7d5029','#4d301d','#5f3c23');
+  el('polygon',{points:pts([P(50,20,10),P(80,20,10),P(80,25,11.6),P(50,25,11.6)]),fill:'#5c3a22'},gI);
+  el('polygon',{points:pts([P(50,30,10),P(80,30,10),P(80,25,11.6),P(50,25,11.6)]),fill:'#4a2e1b'},gI);
+  el('polyline',{points:pts([P(50,25,11.6),P(80,25,11.6)]),fill:'none',stroke:'#3a2415','stroke-width':'2'},gI);
+  const cols=['#3f6fa8','#7a4f96','#b23a3a','#e8e2d4'];
+  for(let i=0;i<6;i++){
+    const a=20+10*i/6, b=20+10*(i+1)/6;
+    el('polygon',{points:pts([P(50,a,0),P(50,b,0),P(50,b,8),P(50,a,8)]),fill:cols[i%4],
+      'fill-opacity':'.92',stroke:'#2a2520','stroke-width':'.3'},gI);
+  }
+  el('polygon',{points:pts([P(70,20,0),P(70,30,0),P(70,30,10),P(70,20,10)]),
+    fill:'#7a4f96','fill-opacity':'.32',stroke:'#b58fd0','stroke-width':'1.1','stroke-dasharray':'3 2',
+    class:'hot','data-k':'veil'},gI);
+}
+function buildLabels(gL){
+  const anchors=[
+    {k:'gate',a:P(0,25,5.6)},{k:'altar',a:P(22.5,25,4.4)},{k:'laver',a:P(36,25,3.6)},
+    {k:'holy',a:P(60,25,11.8)},{k:'mhk',a:P(75,25,11.8)},{k:'veil',a:P(70,20,6)},
+    {k:'court',a:P(100,25,5.6)}
+  ];
+  const left=[],right=[];
+  anchors.forEach(o=>{ (o.a[0]<OX?left:right).push(o); });
+  const place=(arr,side)=>{
+    arr.sort((p,q)=>p.a[1]-q.a[1]);
+    const n=arr.length;
+    // 앵커의 세로 위치를 최대한 따르되, 서로 겹치지 않게 최소 간격만 확보
+    const MIN=42, top=30, bot=612;
+    let ys=arr.map(o=>Math.max(top,Math.min(bot,o.a[1])));
+    for(let i=1;i<n;i++) if(ys[i]-ys[i-1]<MIN) ys[i]=ys[i-1]+MIN;
+    const over=ys[n-1]-bot;
+    if(over>0) for(let i=n-1;i>=0;i--) ys[i]=Math.max(top,ys[i]-over);
+    for(let i=1;i<n;i++) if(ys[i]-ys[i-1]<MIN) ys[i]=ys[i-1]+MIN;
+    arr.forEach((o,i)=>{
+      const ty=ys[i];
+      // 앵커에서 살짝만 벗어난 위치에 배치 (그림을 밀어내지 않도록)
+      const tx = side==='L' ? Math.max(56, o.a[0]-52) : Math.min(704, o.a[0]+52);
+      const it=ITEMS[o.k];
+      el('line',{x1:o.a[0],y1:o.a[1],x2:tx,y2:ty,stroke:'#D9A441','stroke-width':'1.1','stroke-opacity':'.65'},gL);
+      el('circle',{cx:o.a[0],cy:o.a[1],r:3.8,fill:'#D9A441',stroke:'#141210','stroke-width':'1.3'},gL);
+      const g=el('g',{class:'lbl','data-k':o.k},gL);
+      el('circle',{cx:tx,cy:ty,r:3,fill:'#D9A441'},g);
+      const t=el('text',{x:tx+(side==='L'?-10:10),y:ty+6.5,'text-anchor':side==='L'?'end':'start',
+        'font-size':'21','font-weight':'700',fill:'#EFE9DD',
+        stroke:'#141210','stroke-width':'4','paint-order':'stroke'},g);
+      t.textContent=it.name;
+    });
+  };
+  place(left,'L'); place(right,'R');
+  [{t:'동',p:P(-9,25)},{t:'서',p:P(109,25)},{t:'남',p:P(50,-9)},{t:'북',p:P(50,59)}].forEach(d=>{
+    const t=el('text',{x:d.p[0],y:d.p[1],'text-anchor':'middle','font-size':'17',fill:'#a89c85',
+      'font-family':"'Space Mono',monospace",'font-weight':'700',
+      stroke:'#141210','stroke-width':'3.4','paint-order':'stroke'},gL);
+    t.textContent=d.t;
+  });
+  bindHits(gL);
+}
+
+// ══════════ 드래그 회전 (턴테이블 감각) ══════════
+let dragging=false, dragged=false, lastX=0, lastY=0, raf=null;
+let vYaw=0, vPitch=0, lastT=0, inertia=null, capId=null;
+function renderLoop(){
+  if(raf) return;
+  raf=requestAnimationFrame(()=>{ raf=null; buildScene(); });
+}
+function initDrag(){
+  const svg=document.getElementById('scene');
+  const pt=e=>(e.touches&&e.touches[0])?e.touches[0]:e;
+  const down=e=>{
+    if(inertia){ cancelAnimationFrame(inertia); inertia=null; }
+    dragging=true; dragged=false;
+    const p=pt(e); lastX=p.clientX; lastY=p.clientY; lastT=performance.now();
+    vYaw=0; vPitch=0; capId=null;
+    if(e.type==='touchstart' && e.cancelable) e.preventDefault();
+  };
+  const move=e=>{
+    if(!dragging) return;
+    const p=pt(e), now=performance.now();
+    const dx=p.clientX-lastX, dy=p.clientY-lastY;
+    const dt=Math.max(8, now-lastT);
+    // 첫 움직임부터 기본 스크롤 차단 (세로 드래그가 모달로 새는 것 방지)
+    if(e.cancelable) e.preventDefault();
+    if(Math.abs(dx)+Math.abs(dy)>3){
+      dragged=true;
+      if(capId===null && e.pointerId!==undefined && svg.setPointerCapture){
+        try{ svg.setPointerCapture(e.pointerId); capId=e.pointerId; }catch(_){}
+      }
+    }
+    if(!dragged){ lastX=p.clientX; lastY=p.clientY; return; }
+    const dYaw=-dx*0.5;
+    const dPitch=dy*0.26;
+    YAW += dYaw;
+    PITCH = Math.max(0, Math.min(58, PITCH + dPitch));
+    // 속도 (지수 평활 — 튀는 값 억제)
+    vYaw   = vYaw*0.72   + (dYaw/dt*16)*0.28;
+    vPitch = vPitch*0.72 + (dPitch/dt*16)*0.28;
+    lastX=p.clientX; lastY=p.clientY; lastT=now;
+    renderLoop();
+    if(e.cancelable) e.preventDefault();
+  };
+  const up=e=>{
+    if(!dragging) return;
+    dragging=false;
+    if(capId!==null && svg.releasePointerCapture){ try{svg.releasePointerCapture(capId);}catch(_){} capId=null; }
+    // 관성 감속
+    if(Math.abs(vYaw)>0.12 || Math.abs(vPitch)>0.12){
+      const glide=()=>{
+        vYaw*=0.93; vPitch*=0.93;
+        YAW += vYaw;
+        PITCH = Math.max(0, Math.min(58, PITCH + vPitch));
+        buildScene();
+        if(Math.abs(vYaw)>0.05 || Math.abs(vPitch)>0.05) inertia=requestAnimationFrame(glide);
+        else { inertia=null; buildScene(); }
+      };
+      inertia=requestAnimationFrame(glide);
+    } else if(dragged) buildScene();
+    setTimeout(()=>{dragged=false;},60);
+  };
+  if(window.PointerEvent){
+    svg.addEventListener('pointerdown',down);
+    svg.addEventListener('pointermove',move,{passive:false});
+    svg.addEventListener('pointerup',up);
+    svg.addEventListener('pointercancel',up);
+    svg.addEventListener('pointerleave',e=>{ if(dragging) up(e); });
+  } else {
+    svg.addEventListener('mousedown',down);
+    svg.addEventListener('touchstart',down,{passive:false});
+    window.addEventListener('mousemove',move);
+    svg.addEventListener('touchmove',move,{passive:false});
+    window.addEventListener('mouseup',up);
+    window.addEventListener('touchend',up);
+    window.addEventListener('touchcancel',up);
+  }
+  const spin=d=>{
+    if(inertia){ cancelAnimationFrame(inertia); inertia=null; }
+    const from=YAW, to=YAW+d, t0=performance.now();
+    (function step(t){
+      const k=Math.min(1,(t-t0)/320);
+      YAW=from+(to-from)*(1-Math.pow(1-k,3));
+      buildScene();
+      if(k<1) requestAnimationFrame(step);
+    })(t0);
+  };
+  // 그림 위에서 시작한 터치는 문서 밖(아티팩트 뷰어)으로 새지 않게 소비
+  document.addEventListener('touchmove',function(e){
+    if(dragging && e.cancelable) e.preventDefault();
+  },{passive:false});
+  // iOS 제스처(핀치/스와이프) 차단
+  svg.addEventListener('gesturestart',e=>e.preventDefault());
+  svg.addEventListener('gesturechange',e=>e.preventDefault());
+    document.getElementById('rleft').addEventListener('click',()=>spin(-45));
+  document.getElementById('rright').addEventListener('click',()=>spin(45));
+  document.getElementById('rreset').addEventListener('click',()=>{
+    if(inertia){ cancelAnimationFrame(inertia); inertia=null; }
+    YAW=0;PITCH=36;buildScene();
+  });
+}
+
+// ══════════ 성소/지성소 내부 ══════════
+function interiorSVG(level){
+  if(level==='holy'){
+    return `<svg viewBox="0 0 320 190" class="floor">
+      <defs><linearGradient id="gw" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#3a2a18"/><stop offset="1" stop-color="#241a10"/></linearGradient></defs>
+      <rect x="0" y="0" width="320" height="190" fill="#14110e"/>
+      <rect x="10" y="18" width="300" height="150" fill="url(#gw)" stroke="#5d4322"/>
+      ${Array.from({length:12},(_,i)=>`<line x1="${18+i*24}" y1="18" x2="${18+i*24}" y2="168" stroke="#6b4e26" stroke-width="1"/>`).join('')}
+      <polygon points="10,168 310,168 296,182 24,182" fill="#2a2018"/>
+      <g class="fitem" data-k="veil" style="cursor:pointer">
+        <rect x="256" y="20" width="50" height="146" fill="#6b4a8f" stroke="#b58fd0" stroke-width="1.5"/>
+        <path d="M262 26 q8 12 0 24 q-8 12 0 24 q8 12 0 24 q-8 12 0 24 q8 12 0 22" stroke="#d8c2ea" fill="none" stroke-width="1" opacity=".55"/>
+        <path d="M282 26 q8 12 0 24 q-8 12 0 24 q8 12 0 24 q-8 12 0 24 q8 12 0 22" stroke="#d8c2ea" fill="none" stroke-width="1" opacity=".55"/>
+        <text x="281" y="180" text-anchor="middle" font-size="10" fill="#c9aede" font-weight="600">휘장</text>
+      </g>
+      <g class="fitem" data-k="lamp" style="cursor:pointer">
+        <rect x="44" y="150" width="26" height="6" rx="2" fill="#c9a227"/>
+        <rect x="55" y="96" width="4" height="56" fill="#d9b23a"/>
+        ${[0,1,2].map(i=>{const dx=(i+1)*11;return `
+          <path d="M57 ${132-i*8} q-${dx} -6 -${dx} -26" stroke="#d9b23a" fill="none" stroke-width="3"/>
+          <path d="M57 ${132-i*8} q${dx} -6 ${dx} -26" stroke="#d9b23a" fill="none" stroke-width="3"/>`}).join('')}
+        ${[-33,-22,-11,0,11,22,33].map(dx=>`
+          <ellipse cx="${57+dx}" cy="${dx===0?94:106}" rx="4" ry="2.6" fill="#e8c96b"/>
+          <circle cx="${57+dx}" cy="${(dx===0?94:106)-5}" r="3.4" fill="#ffd97a" opacity=".92"/>`).join('')}
+        <text x="57" y="180" text-anchor="middle" font-size="10" fill="#e8c96b" font-weight="600">등잔대</text>
+      </g>
+      <g class="fitem" data-k="table" style="cursor:pointer">
+        <rect x="112" y="124" width="62" height="7" rx="2" fill="#d9b23a"/>
+        <rect x="116" y="131" width="5" height="26" fill="#b8942e"/>
+        <rect x="165" y="131" width="5" height="26" fill="#b8942e"/>
+        <rect x="112" y="155" width="62" height="4" rx="1" fill="#b8942e"/>
+        ${[0,1,2,3,4,5].map(i=>`<rect x="${117+(i%3)*20}" y="${112+Math.floor(i/3)*6}" width="17" height="6" rx="1.5" fill="#e0cfa0" stroke="#b8a578" stroke-width=".5"/>`).join('')}
+        <text x="143" y="180" text-anchor="middle" font-size="10" fill="#e0cfa0" font-weight="600">진설병 상</text>
+      </g>
+      <g class="fitem" data-k="incense" style="cursor:pointer">
+        <rect x="212" y="118" width="30" height="34" fill="#d9b23a" stroke="#a8842a"/>
+        <rect x="209" y="114" width="36" height="6" rx="1.5" fill="#e8c96b"/>
+        ${[211,240].map(x=>`<rect x="${x}" y="108" width="4" height="8" fill="#e8c96b"/>`).join('')}
+        <path d="M227 106 q-6 -10 0 -18 q6 -10 0 -18" stroke="#cfc3ae" fill="none" stroke-width="2" opacity=".5"/>
+        <text x="227" y="180" text-anchor="middle" font-size="10" fill="#e8c96b" font-weight="600">분향단</text>
+      </g>
+    </svg>`;
+  }
+  return `<svg viewBox="0 0 320 190" class="floor">
+    <rect x="0" y="0" width="320" height="190" fill="#12100d"/>
+    <rect x="10" y="18" width="300" height="150" fill="#2b1f12" stroke="#5d4322"/>
+    ${Array.from({length:12},(_,i)=>`<line x1="${18+i*24}" y1="18" x2="${18+i*24}" y2="168" stroke="#6b4e26" stroke-width="1"/>`).join('')}
+    <polygon points="10,168 310,168 296,182 24,182" fill="#241a10"/>
+    <ellipse cx="160" cy="66" rx="86" ry="42" fill="#D9A441" opacity=".13"/>
+    <ellipse cx="160" cy="66" rx="54" ry="26" fill="#D9A441" opacity=".13"/>
+    <g class="fitem" data-k="mercy" style="cursor:pointer">
+      <path d="M112 86 q16 -34 34 -6" stroke="#e8c96b" fill="none" stroke-width="3"/>
+      <path d="M208 86 q-16 -34 -34 -6" stroke="#e8c96b" fill="none" stroke-width="3"/>
+      <circle cx="128" cy="80" r="6" fill="#e8c96b"/><circle cx="192" cy="80" r="6" fill="#e8c96b"/>
+      <rect x="108" y="88" width="104" height="9" rx="2" fill="#ffd97a"/>
+      <text x="160" y="60" text-anchor="middle" font-size="10" fill="#ffd97a" font-weight="600">속죄소</text>
+    </g>
+    <g class="fitem" data-k="ark" style="cursor:pointer">
+      <rect x="112" y="97" width="96" height="42" fill="#d9b23a" stroke="#a8842a" stroke-width="1.5"/>
+      <rect x="112" y="97" width="96" height="6" fill="#e8c96b"/>
+      <line x1="104" y1="116" x2="216" y2="116" stroke="#c9a227" stroke-width="4"/>
+      <circle cx="118" cy="110" r="4" fill="#8a6a1e"/><circle cx="202" cy="110" r="4" fill="#8a6a1e"/>
+      <text x="160" y="158" text-anchor="middle" font-size="10" fill="#e8c96b" font-weight="600">언약궤</text>
+    </g>
+  </svg>`;
+}
+
+// ══════════ 말씀 구절 (공통) ══════════
+function scriptureBlock(k,src){
+  const bank = src==='P'?PSCRIPT:SCRIPTURE;
+  const cites=bank[k]||[];
+  if(!cites.length) return '';
+  return `<div class="sec">
+    <div class="seclbl">말씀 구절</div>
+    <div class="reflist" data-k="${k}" data-src="${src}">
+      ${cites.map((c,i)=>`<button class="refpill" data-i="${i}">${c.ref}</button>`).join('')}
+    </div>
+    <div class="verses"></div>
+  </div>`;
+}
+function bindScripture(scope){
+  scope.querySelectorAll('.reflist').forEach(rl=>{
+    const k=rl.dataset.k, src=rl.dataset.src;
+    const bank = src==='P'?PSCRIPT:SCRIPTURE;
+    const vw=rl.parentElement.querySelector('.verses');
+    rl.querySelectorAll('.refpill').forEach(b=>{
+      b.addEventListener('click',()=>{
+        const i=+b.dataset.i, c=bank[k][i], id='v-'+src+'-'+k+'-'+i;
+        const ex=vw.querySelector('#'+CSS.escape(id));
+        if(ex){ ex.remove(); b.classList.remove('on'); return; }
+        const dv=document.createElement('div'); dv.className='vblock'; dv.id=id;
+        let s=`<div class="vh">${c.book} ${c.ref.replace(/^[가-힣]+/,'')}</div>`;
+        c.verses.forEach(v=>{ s+=`<p><span class="vn">${v.v}</span>${v.t}</p>`; });
+        dv.innerHTML=s; vw.appendChild(dv); b.classList.add('on');
+      });
+    });
+  });
+}
+// 평면 정보 섹션 (트리 없음)
+function sec(lbl,html){ return `<div class="sec"><div class="seclbl">${lbl}</div>${html}</div>`; }
+function kv(rows){ return `<dl class="kv">`+rows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('')+`</dl>`; }
+
+// ══════════ 성막 모달 ══════════
+const overlay=document.getElementById('overlay'), modal=document.getElementById('modal');
+const zoomfx=document.getElementById('zoomfx');
+let stack=[];
+const ZC={'뜰':'z-court','성소':'z-holy','지성소':'z-mhk'};
+function zoomTo(k){ zoomfx.className='zoomfx on'; setTimeout(()=>{ openItem(k); zoomfx.className='zoomfx'; },230); }
+function openItem(k){ stack.push(k); renderItem(); overlay.classList.add('on'); document.body.style.overflow='hidden'; }
+function backItem(){ stack.pop(); stack.length?renderItem():closeModal(); }
+function closeModal(){ stack=[]; overlay.classList.remove('on'); document.body.style.overflow=''; }
+function renderItem(){
+  const k=stack[stack.length-1], it=ITEMS[k];
+  modal.className='modal '+(it.cls||ZC[it.zone]||'');
+  let inner='';
+  if(k==='holy') inner=`<div class="interior"><div class="ihead">성소 안 — 기구를 누르세요</div>${interiorSVG('holy')}</div>`;
+  if(k==='mhk')  inner=`<div class="interior"><div class="ihead">지성소 안 — 기구를 누르세요</div>${interiorSVG('mhk')}</div>`;
+  if(it.t && window.TempleUI) inner=TempleUI.innerFor(k);
+  const crumb=stack.map((s,i)=>`<span class="cb${i===stack.length-1?' on':''}" data-i="${i}">${ITEMS[s].name}</span>`).join('<i>›</i>');
+  const rows=[]; if(it.size) rows.push(['규격',it.size]); if(it.material) rows.push(['재료',it.material]);
+  const story=it.zone==='역사'||it.zone==='해석';
+  modal.innerHTML=`
+    <div class="mtop">
+      <button class="mclose" id="mclose">✕</button>
+      ${stack.length>1?'<button class="mback" id="mback">‹ 뒤로</button>':''}
+      <div class="mzone">${it.t?TempleUI.templeName(it.t)+' · ':''}${it.era||it.zone}</div>
+      <h3 class="mname">${it.name}</h3>
+      <div class="men">${it.en||''}</div>
+    </div>
+    <div class="crumbs">${crumb}</div>
+    ${inner}
+    ${it.fp?`<div class="fpwrap"><button class="fpbtn" id="mfp"><span>👁</span><b>이 자리에 서서 보기</b><em>1인칭</em></button></div>`:''}
+    <div class="mbody">
+      ${rows.length?sec('규격 · 재료',kv(rows)):''}
+      ${it.use?sec(story?'내용':'쓰임',`<p>${it.use}</p>`):''}
+      ${it.meaning?sec(story?'의미':'신앙적 의미',`<p>${it.meaning}</p>`):''}
+      ${it.type?sec('그리스도의 예표',`<p class="tp">${it.type}</p>`):''}
+      ${it.note?sec('참고',`<p class="note">${it.note}</p>`):''}
+      ${scriptureBlock(k,'T')}
+    </div>`;
+  modal.querySelector('#mclose').addEventListener('click',closeModal);
+  const bk=modal.querySelector('#mback'); if(bk) bk.addEventListener('click',backItem);
+  const fb=modal.querySelector('#mfp'); if(fb) fb.addEventListener('click',()=>TempleUI.enterFP(it.t,it.fp));
+  if(it.t && window.TempleUI) TempleUI.bindInner(modal);
+  bindScripture(modal);
+  modal.querySelectorAll('.fitem').forEach(n=>n.addEventListener('click',()=>{
+    zoomfx.className='zoomfx on'; setTimeout(()=>{ openItem(n.dataset.k); zoomfx.className='zoomfx'; },200);
+  }));
+  modal.querySelectorAll('.cb').forEach(n=>n.addEventListener('click',()=>{ stack=stack.slice(0,+n.dataset.i+1); renderItem(); }));
+  modal.scrollTop=0;
+}
+overlay.addEventListener('click',e=>{ if(e.target===overlay) closeModal(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(pOverlay.classList.contains('on')) closePriest(); else closeModal(); } });
+
+// ══════════ 제사장 (탭 상태 유지 + 평면 구조) ══════════
+const pOverlay=document.getElementById('poverlay'), pModal=document.getElementById('pmodal');
+let pTab='duty', pDetail=null;
+const ROBEFIG=`<svg viewBox="0 0 200 262" class="robefig">
+  <g class="rpart" data-k="rb_plate"><ellipse cx="100" cy="30" rx="26" ry="16" fill="#e8e2d4"/>
+    <rect x="80" y="30" width="40" height="8" rx="3" fill="#d9b23a"/></g>
+  <circle cx="100" cy="52" r="16" fill="#c9a882"/>
+  <g class="rpart" data-k="rb_robe"><path d="M70 74 q30 -12 60 0 l10 118 q-40 10 -80 0 z" fill="#3f6fa8"/>
+    ${[76,90,104,118,132].map(x=>`<circle cx="${x}" cy="194" r="4" fill="#d9b23a"/>`).join('')}
+    ${[83,97,111,125].map(x=>`<circle cx="${x}" cy="196" r="3.4" fill="#b23a3a"/>`).join('')}</g>
+  <g class="rpart" data-k="rb_ephod"><path d="M74 78 q26 -10 52 0 l6 74 q-32 8 -64 0 z" fill="#7a4f96"/>
+    <rect x="72" y="150" width="56" height="9" rx="3" fill="#d9b23a"/>
+    <circle cx="80" cy="84" r="6" fill="#e8e2d4"/><circle cx="120" cy="84" r="6" fill="#e8e2d4"/></g>
+  <g class="rpart" data-k="rb_breast"><rect x="85" y="96" width="30" height="30" rx="2" fill="#c9a227" stroke="#8a6a1e"/>
+    ${[0,1,2,3].map(r=>[0,1,2].map(c=>`<rect x="${88+c*8}" y="${99+r*7}" width="6" height="5" rx="1" fill="${['#b23a3a','#3f6fa8','#7C9070','#e8e2d4','#7a4f96','#d9b23a'][(r*3+c)%6]}"/>`).join('')).join('')}</g>
+  <g class="rpart" data-k="rb_urim"><circle cx="100" cy="111" r="5" fill="none" stroke="#fff" stroke-width="1.3" opacity=".85" stroke-dasharray="2 2"/></g>
+  <g class="rpart" data-k="rb_tunic"><path d="M78 196 q22 8 44 0 l4 40 q-26 6 -52 0 z" fill="#e8e2d4"/></g>
+  <g class="rpart" data-k="rb_linen"><rect x="84" y="236" width="32" height="16" rx="3" fill="#cfc7b4"/></g>
+</svg>`;
+function openPriestModal(){ pDetail=null; renderPriest(); pOverlay.classList.add('on'); document.body.style.overflow='hidden'; }
+function closePriest(){ pOverlay.classList.remove('on'); document.body.style.overflow=''; }
+function renderPriest(){
+  // 상세가 있으면 상세, 없으면 목록 — 탭(pTab)은 항상 유지
+  let head=`<div class="mtop">
+      <button class="mclose" id="pclose">✕</button>
+      ${pDetail?'<button class="mback" id="pback">‹ 목록</button>':''}
+      <div class="mzone">The Priesthood</div>
+      <h3 class="mname">제사장</h3>
+      <div class="men">직무 · 의복 · 계보</div>
+    </div>
+    <div class="ptabs">
+      ${[['duty','직무'],['robe','의복'],['line','계보']].map(([t,n])=>
+        `<button class="ptab${pTab===t?' on':''}" data-t="${t}">${n}</button>`).join('')}
+    </div>`;
+  let body='';
+  if(pDetail){
+    body=`<div class="mbody">${detailHTML(pTab,pDetail)}</div>`;
+  } else if(pTab==='duty'){
+    body=`<div class="mbody"><div class="cards">`+DUTIES.map(d=>`
+      <button class="pcard" data-k="${d.k}">
+        <div class="pc-h"><b>${d.name}</b><em>${d.where}</em></div>
+        <p>${d.desc.split('.')[0]}.</p>
+      </button>`).join('')+`</div></div>`;
+  } else if(pTab==='robe'){
+    body=`<div class="mbody">
+      <div class="robewrap">${ROBEFIG}<div class="rhint">그림의 각 부분을 눌러도 열립니다</div></div>
+      <div class="cards">`+ROBES.map(r=>`
+      <button class="pcard" data-k="${r.k}">
+        <div class="pc-h"><b>${r.name}</b><em>${r.pos}</em></div>
+        <p>${r.desc.split('.')[0]}.</p>
+      </button>`).join('')+`</div></div>`;
+  } else {
+    body=`<div class="mbody"><div class="timeline">`+LINE.map(p=>`
+      <button class="tnode${p.warn?' warn':''}${p.christ?' christ':''}" data-k="${p.k}">
+        <i class="tdot"></i>
+        <div class="tinfo"><div class="tl-h"><b>${p.name}</b><em>${p.gen}</em></div>
+        <span>${p.tag}</span><small>${p.era}</small></div>
+      </button>`).join('')+`</div></div>`;
+  }
+  pModal.className='modal p-modal';
+  pModal.innerHTML=head+body;
+  pModal.querySelector('#pclose').addEventListener('click',closePriest);
+  const pb=pModal.querySelector('#pback');
+  if(pb) pb.addEventListener('click',()=>{ pDetail=null; renderPriest(); });
+  pModal.querySelectorAll('.ptab').forEach(t=>t.addEventListener('click',()=>{
+    pTab=t.dataset.t; pDetail=null; renderPriest();
+  }));
+  pModal.querySelectorAll('.pcard,.tnode').forEach(n=>n.addEventListener('click',()=>{
+    pDetail=n.dataset.k; renderPriest();
+  }));
+  pModal.querySelectorAll('.rpart').forEach(n=>{
+    n.style.cursor='pointer';
+    n.addEventListener('click',()=>{ pDetail=n.dataset.k; renderPriest(); });
+  });
+  bindScripture(pModal);
+  pModal.scrollTop=0;
+}
+function detailHTML(tab,key){
+  if(tab==='duty'){
+    const d=DUTIES.find(x=>x.k===key);
+    return `<div class="dhead"><h4>${d.name}</h4><span>${d.where}</span></div>
+      ${sec('무슨 일인가',`<p>${d.desc}</p>`)}
+      ${sec('그리스도의 예표',`<p class="tp">${d.type}</p>`)}
+      ${scriptureBlock(d.k,'P')}`;
+  }
+  if(tab==='robe'){
+    const r=ROBES.find(x=>x.k===key);
+    return `<div class="dhead"><h4>${r.name}</h4><span>${r.en} · ${r.pos}</span></div>
+      ${sec('재료 · 모양',kv([['재료',r.material],['모양',r.desc]]))}
+      ${sec('신앙적 의미',`<p>${r.meaning}</p>`)}
+      ${sec('그리스도의 예표',`<p class="tp">${r.type}</p>`)}
+      ${scriptureBlock(r.k,'P')}`;
+  }
+  const p=LINE.find(x=>x.k===key);
+  return `<div class="dhead"><h4>${p.name}</h4><span>${p.gen} · ${p.era}</span></div>
+    ${sec('기록',`<p>${p.note}</p>`)}
+    ${scriptureBlock(p.k,'P')}`;
+}
+pOverlay.addEventListener('click',e=>{ if(e.target===pOverlay) closePriest(); });
+document.getElementById('priestBtn').addEventListener('click',openPriestModal);
+
+// ══════════ 검색 ══════════
+const q=document.getElementById('q'), clr=document.getElementById('clr'), reslist=document.getElementById('reslist');
+function norm(s){ return s.toLowerCase().replace(/\s+/g,''); }
+function doSearch(){
+  const v=norm(q.value);
+  clr.classList.toggle('on', q.value.length>0);
+  reslist.innerHTML='';
+  if(!v){ reslist.classList.remove('on'); return; }
+  reslist.classList.add('on');
+  const rows=[];
+  Object.keys(ITEMS).forEach(k=>{ const it=ITEMS[k];
+    if(norm(it.name+(it.en||'')+(it.kw||'')+it.zone+(it.code||'')).includes(v)) rows.push({n:it.name,z:(it.t?TempleUI.templeName(it.t):'성막')+' · '+it.zone,go:()=>openItem(k)}); });
+  DUTIES.forEach(d=>{ if(norm(d.name+d.where).includes(v)) rows.push({n:d.name,z:'제사장 · 직무',go:()=>{pTab='duty';pDetail=d.k;openPriestModal2();}}); });
+  ROBES.forEach(r=>{ if(norm(r.name+r.en).includes(v)) rows.push({n:r.name,z:'제사장 · 의복',go:()=>{pTab='robe';pDetail=r.k;openPriestModal2();}}); });
+  LINE.forEach(p=>{ if(norm(p.name+p.gen+p.tag).includes(v)) rows.push({n:p.name,z:'제사장 · 계보',go:()=>{pTab='line';pDetail=p.k;openPriestModal2();}}); });
+  if(!rows.length){ reslist.innerHTML='<div class="nores">결과가 없어요</div>'; return; }
+  rows.forEach(r=>{
+    const b=document.createElement('button'); b.className='res';
+    b.innerHTML=`<b>${r.n}</b><span>${r.z}</span>`;
+    b.addEventListener('click',r.go); reslist.appendChild(b);
+  });
+}
+function openPriestModal2(){ renderPriest(); pOverlay.classList.add('on'); document.body.style.overflow='hidden'; }
+q.addEventListener('input',doSearch);
+clr.addEventListener('click',()=>{ q.value=''; doSearch(); q.focus(); });
+
+// ══════════ 기구 목록 (구역별 그룹) ══════════
+const groups=[
+  {z:'뜰', cls:'z-court', keys:['court','gate','altar','laver']},
+  {z:'성소', cls:'z-holy', keys:['tent','holy','lamp','table','incense','veil']},
+  {z:'지성소', cls:'z-mhk', keys:['mhk','ark','mercy']}
+];
+const glist=document.getElementById('glist');
+groups.forEach(g=>{
+  const sec=document.createElement('div'); sec.className='gsec '+g.cls;
+  sec.innerHTML=`<div class="ghead"><i></i>${g.z}<em>${g.keys.length}</em></div>
+    <div class="grid">`+g.keys.map(k=>`<button class="gitem" data-k="${k}">${ITEMS[k].name.split(' (')[0]}</button>`).join('')+`</div>`;
+  glist.appendChild(sec);
+});
+glist.querySelectorAll('.gitem').forEach(n=>n.addEventListener('click',()=>openItem(n.dataset.k)));
+
+buildScene();
+initDrag();
+
+</script>
+<script src="temples-data.js"></script>
+<script src="temples-scripture.js"></script>
+<script src="temples-ui.js"></script>
+</body>
+</html>

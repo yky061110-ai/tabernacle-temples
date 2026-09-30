@@ -1,0 +1,23 @@
+{
+  "name": "성막과 성전",
+  "short_name": "성막",
+  "description": "성막 · 솔로몬 성전 · 헤롯 성전 · 에스겔 성전 인터랙티브 도해",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#141210",
+  "theme_color": "#141210",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
