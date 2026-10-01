@@ -12,10 +12,12 @@ Object.keys(TITEMS).forEach(k=>{
   SCRIPTURE[k]=(it.refs||[]).filter(r=>TREF[r]).map(r=>({ref:r,book:TREF[r].book,verses:TREF[r].verses}));
   if(!it.kw) it.kw='';
 });
+// 성막 기구도 같은 체계로 (조감도·3D·1인칭)
+['court','gate','altar','laver','tent','holy','lamp','table','incense','veil','mhk','ark','mercy'].forEach(k=>{ if(ITEMS[k]){ ITEMS[k].t='tab'; Object.assign(ITEMS[k],TAB_PATCH[k]||{}); } });
 
 // ── 탭 ──
 const TABS=['tab','solomon','herod','ezekiel'];
-const state={ tab:'tab', mode:{solomon:'plan',herod:'plan',ezekiel:'plan'}, vb:{}, curVP:null };
+const state={ tab:'tab', mode:{tab:'orbit',solomon:'plan',herod:'plan',ezekiel:'plan'}, vb:{}, curVP:null };
 const paneTab=$('#pane-tab'), paneT=$('#pane-temple');
 const ttl=$('#ttl'), tsub=$('#tsub');
 const tabs=$('#tabs');
@@ -23,14 +25,9 @@ function setTab(t,opt={}){
   if(!TABS.includes(t)) t='tab';
   state.tab=t; LS.set('sm_tab',t);
   tabs.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
-  if(t==='tab'){
-    paneTab.hidden=false; paneT.hidden=true; T3Dhide();
-    ttl.innerHTML='성 <span class="glow">막</span>'; tsub.textContent='The Tabernacle · 출애굽기 25–40';
-    return;
-  }
   const T=TEMPLES[t];
   paneTab.hidden=true; paneT.hidden=false;
-  ttl.innerHTML=`${esc(T.title.replace(/\s*성전$/,''))} <span class="glow">성전</span>`; tsub.textContent=T.sub;
+  ttl.innerHTML=t==='tab'?'성 <span class="glow">막</span>':`${esc(T.title.replace(/\s*성전$/,''))} <span class="glow">성전</span>`; tsub.textContent=T.sub;
   buildTemplePane(t);
   setMode(opt.mode||state.mode[t]||'plan',opt);
 }
@@ -43,12 +40,12 @@ function buildTemplePane(t){
   const T=TEMPLES[t];
   // 범례
   const lg=$('#tlegend');
-  lg.innerHTML=`<div class="lghead"><span>조감도 기호</span><em>누르면 설명이 열립니다</em></div><div class="lggrid">`+
+  lg.innerHTML=`<div class="lghead"><span>조감도 기호</span><em>누르면 도면에 위치가 표시됩니다</em></div><div class="lggrid">`+
     T.legend.map(([c,k])=>`<button class="lg" data-k="${k}"><b class="${/^\d+$/.test(c)?'num':''}">${esc(c)}</b><span>${esc(ITEMS[k].name)}</span></button>`).join('')+
     `</div><p class="lgnote">${esc(T.planNote)}</p>`;
-  lg.querySelectorAll('.lg').forEach(b=>b.addEventListener('click',()=>{ flashPlan(b.dataset.k); openItem(b.dataset.k); }));
+  lg.querySelectorAll('.lg').forEach(b=>b.addEventListener('click',()=>{ stage.scrollIntoView({behavior:'smooth',block:'start'}); selectPlan(b.dataset.k); }));
   // 역사/해석 버튼
-  $('#histBtn').innerHTML=`<span class="ico">✦</span><b>${esc(T.histTitle)}</b><em>${esc(T.histSub)}</em>`;
+  $('#histBtn').innerHTML=`<span class="ico">${t==='tab'?'✛':'✦'}</span><b>${esc(T.histTitle)}</b><em>${esc(T.histSub)}</em>`;
   // 구역별 목록
   const gl=$('#tglist'); gl.innerHTML='';
   T.groups.forEach(g=>{ const s=document.createElement('div'); s.className='gsec '+g.cls;
@@ -63,7 +60,7 @@ function buildTemplePane(t){
 // ── 보기 방식 ──
 const segs=$('#tmodes'), tplan=$('#tplan'), t3d=$('#t3d'), stage=$('#tstage');
 function setMode(m,opt={}){
-  const t=state.tab; if(t==='tab') return;
+  const t=state.tab;
   state.mode[t]=m==='fp'?'fp':m; LS.set('sm_mode_'+t,state.mode[t]);
   segs.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
   stage.dataset.mode=m;
@@ -78,7 +75,7 @@ function setMode(m,opt={}){
   });
 }
 segs.addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) setMode(b.dataset.m); });
-const FIRST={solomon:'outer',herod:'israel',ezekiel:'outer'};
+const FIRST={tab:'court',solomon:'outer',herod:'israel',ezekiel:'outer'};
 function firstVP(t){ return FIRST[t]; }
 
 // ── 3D 모듈 (필요할 때만 불러옴) ──
@@ -95,7 +92,7 @@ function withT3D(fn){
       onZone:k=>renderFPCard(k),
       onMode:m=>{ stage.dataset.view=m; segs.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.m===(m==='fp'?'fp':'orbit'))); state.mode[state.tab]=m==='fp'?'fp':'orbit'; if(m!=='fp') renderFPCard(null); }
     }); T3D=api; }
-    setTimeout(()=>{ try{ if(state.tab!=='tab' && state.mode[state.tab]!=='plan') fn(api); }catch(e){ showErr(e); } setLoading(false); },30);
+    setTimeout(()=>{ try{ if(state.mode[state.tab]!=='plan') fn(api); }catch(e){ showErr(e); } setLoading(false); },30);
   }).catch(e=>{ showErr(e); });
 }
 function setLoading(on){ $('#t3load').classList.toggle('on',on); }
@@ -143,7 +140,7 @@ function openHist(){ const T=TEMPLES[state.tab];
   hOverlay.classList.add('on'); document.body.style.overflow='hidden'; hModal.scrollTop=0; }
 function closeHist(){ hOverlay.classList.remove('on'); if(!overlay.classList.contains('on')) document.body.style.overflow=''; }
 hOverlay.addEventListener('click',e=>{ if(e.target===hOverlay) closeHist(); });
-$('#histBtn').addEventListener('click',openHist);
+$('#histBtn').addEventListener('click',()=>{ if(state.tab==='tab') openPriestModal(); else openHist(); });
 
 // ══════════════ 평면도 (조감도) ══════════════
 const NS='http://www.w3.org/2000/svg';
@@ -225,7 +222,7 @@ function renderPlan(t){
       const el=document.elementFromPoint(e.clientX,e.clientY); const pk=el&&el.closest&&el.closest('.pk');
       if(pk){ const k=pk.dataset.k;
         if(pk.dataset.fp){ const q=toSvg(e.clientX,e.clientY); const wz=B[3]-q.x, wx=q.y+B[0]; flashDot(q.x,q.y,svg); setTimeout(()=>setMode('fp',{at:[wx,wz]}),260); }
-        else { flashPlan(k); openItem(k); } } }
+        else selectPlan(k,{zoom:false}); } else hidePlanCard(); }
     if(ptrs.size===0) down=null; };
   svg.addEventListener('pointerup',up); svg.addEventListener('pointercancel',e=>{ ptrs.delete(e.pointerId); pinch=null; down=null; });
   svg.addEventListener('wheel',e=>{ e.preventDefault(); zoom(Math.exp(e.deltaY*.0015),e.clientX,e.clientY); },{passive:false});
@@ -233,8 +230,37 @@ function renderPlan(t){
   tplan.querySelector('#pzin').onclick=()=>{ const b=r(); zoom(.7,b.left+b.width/2,b.top+b.height/2); };
   tplan.querySelector('#pzout').onclick=()=>{ const b=r(); zoom(1/.7,b.left+b.width/2,b.top+b.height/2); };
   tplan.querySelector('#pzreset').onclick=()=>{ vb={...full}; state.vb[t]=vb; apply(); };
+  // 선택한 곳으로 부드럽게 확대
+  state.zoomTo=(x0,y0,x1,y1)=>{ let w=Math.max((x1-x0)*3,full.w*.55), h=w*full.h/full.w;
+    if(h<(y1-y0)*2.4){ h=(y1-y0)*2.4; w=h*full.w/full.h; } if(w>full.w){ w=full.w; h=full.h; }
+    const tx=(x0+x1)/2-w/2, ty=(y0+y1)/2-h/2+h*.12, a={...vb}, t0=performance.now();
+    const step=now=>{ const k=Math.min(1,(now-t0)/450), e=1-Math.pow(1-k,3);
+      vb.x=a.x+(tx-a.x)*e; vb.y=a.y+(ty-a.y)*e; vb.w=a.w+(w-a.w)*e; vb.h=a.h+(h-a.h)*e; apply(); if(k<1) requestAnimationFrame(step); };
+    requestAnimationFrame(step); };
+  hidePlanCard();
 }
 function flashDot(x,y,svg){ const c=document.createElementNS(NS,'circle'); c.setAttribute('cx',x); c.setAttribute('cy',y); c.setAttribute('r',3); c.setAttribute('class','tapdot'); svg.appendChild(c); setTimeout(()=>c.remove(),700); }
+// ── 도면에서 위치 표시 + 정보 카드 ──
+function selectPlan(k,opt={}){ const svg=tplan.querySelector('svg'); if(!svg||!ITEMS[k]) return;
+  svg.querySelectorAll('.sel').forEach(n=>n.classList.remove('sel')); svg.querySelectorAll('.selring').forEach(n=>n.remove());
+  const els=[...svg.querySelectorAll(`.pk[data-k="${k}"]`)]; let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  els.forEach(n=>{ n.classList.add('sel'); const b=n.getBBox(); x0=Math.min(x0,b.x); y0=Math.min(y0,b.y); x1=Math.max(x1,b.x+b.width); y1=Math.max(y1,b.y+b.height);
+    if(n.classList.contains('code')){ const c=document.createElementNS(NS,'circle'); c.setAttribute('cx',b.x+b.width/2); c.setAttribute('cy',b.y+b.height/2);
+      c.setAttribute('r',Math.max(b.width,b.height)*.95); c.setAttribute('class','selring'); svg.appendChild(c); } });
+  document.querySelectorAll('#tlegend .lg').forEach(b=>b.classList.toggle('on',b.dataset.k===k));
+  showPlanCard(k);
+  if(opt.zoom!==false&&els.length&&state.zoomTo) state.zoomTo(x0,y0,x1,y1); }
+function showPlanCard(k){ const it=ITEMS[k], c=$('#plancard'); const first=(it.use||'').split(/(?<=[.다])\s/)[0];
+  const code=(TEMPLES[state.tab].legend.find(l=>l[1]===k)||[])[0];
+  c.innerHTML=`<button class="pcx" title="닫기">✕</button><div class="fpz ${it.cls||''}"><i></i>${esc(it.zone)}</div>
+    <b>${code?`<span class="pcn">${esc(code)}</span>`:''}${esc(it.name)}</b><p>${esc(first)}</p>
+    <div class="pcbtns"><button class="fpmore pcmore">자세히 보기</button>${it.fp?'<button class="fpmore pcfp">1인칭 시점으로 보기</button>':''}</div>`;
+  c.hidden=false;
+  c.querySelector('.pcx').onclick=hidePlanCard; c.querySelector('.pcmore').onclick=()=>openItem(k);
+  const f=c.querySelector('.pcfp'); if(f) f.onclick=()=>{ markVP(it.fp); setMode('fp',{vp:it.fp}); }; }
+function hidePlanCard(){ const c=$('#plancard'); if(c) c.hidden=true; const svg=tplan.querySelector('svg');
+  if(svg){ svg.querySelectorAll('.sel').forEach(n=>n.classList.remove('sel')); svg.querySelectorAll('.selring').forEach(n=>n.remove()); }
+  document.querySelectorAll('#tlegend .lg.on').forEach(b=>b.classList.remove('on')); }
 function flashPlan(k){ const svg=tplan.querySelector('svg'); if(!svg) return;
   svg.querySelectorAll(`.pk[data-k="${k}"]`).forEach(n=>{ n.classList.remove('hl'); void n.getBBox; n.classList.add('hl'); setTimeout(()=>n.classList.remove('hl'),1600); }); }
 
@@ -251,10 +277,10 @@ function enterFP(t,vp){ closeModal(); closeHist(); if(state.tab!==t) setTab(t,{m
 window.TempleUI={ innerFor, bindInner, enterFP, templeName:t=>TEMPLES[t]?TEMPLES[t].title:'성막' };
 
 // ── 시작 ──
-['solomon','herod','ezekiel'].forEach(t=>{ const m=LS.get('sm_mode_'+t); if(m==='plan'||m==='orbit') state.mode[t]=m; });
+['tab','solomon','herod','ezekiel'].forEach(t=>{ const m=LS.get('sm_mode_'+t); if(m==='plan'||m==='orbit') state.mode[t]=m; });
 // 주소 끝 #herod · #herod-orbit · #herod-fp-israel 로 바로 열기
 const hm=(location.hash||'').slice(1).split('-');
 renderFPCard(null);
-if(TABS.includes(hm[0])&&hm[0]!=='tab'){ const m=['plan','orbit','fp'].includes(hm[1])?hm[1]:null; setTab(hm[0],m?{mode:m,vp:hm[2]}:{}); }
+if(TABS.includes(hm[0])){ const m=['plan','orbit','fp'].includes(hm[1])?hm[1]:null; setTab(hm[0],m?{mode:m,vp:hm[2]}:{}); }
 else { const saved=LS.get('sm_tab'); setTab(saved&&TABS.includes(saved)?saved:'tab'); }
 })();

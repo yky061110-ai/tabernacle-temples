@@ -135,3 +135,18 @@ body.tfull{overflow:hidden}
 /* 범례 번호를 도면과 같게 — 흰 바탕 검은 글씨 */
 .lg b{background:#fff;color:#000;font-weight:800;font-size:12px;border:1.5px solid #000}
 .tplan .scenehint{top:10px;bottom:auto;max-width:70%;background:rgba(239,231,214,.85);padding:2px 6px;border-radius:6px}
+
+/* 도면 선택 표시 + 정보 카드 */
+.plansvg .sel{filter:drop-shadow(0 0 1.5px #d62f2f) drop-shadow(0 0 3px #d62f2f)}
+.plansvg .selring{fill:none;stroke:#d62f2f;stroke-width:3px;vector-effect:non-scaling-stroke;pointer-events:none;animation:selp 1.2s ease-in-out infinite}
+@keyframes selp{0%,100%{opacity:1}50%{opacity:.25}}
+.plancard{position:absolute;left:10px;bottom:10px;max-width:min(380px,calc(100% - 150px));z-index:4;
+  background:rgba(20,18,16,.92);border:1px solid var(--line);border-radius:14px;padding:10px 13px;color:var(--txt);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.plancard b{display:flex;align-items:center;gap:7px;font-family:'Gowun Batang',serif;font-size:16px;margin:2px 26px 3px 0}
+.plancard p{margin:0;font-size:12.5px;color:var(--txt-soft);line-height:1.55;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.pcn{flex:none;min-width:24px;height:24px;padding:0 5px;border-radius:12px;background:#fff;color:#000;border:1.5px solid #000;font-family:'Space Mono',monospace;font-size:12px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+.pcx{position:absolute;right:8px;top:8px;width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:var(--bg2);color:var(--txt-soft);cursor:pointer;font-size:12px}
+.pcbtns{display:flex;gap:6px;flex-wrap:wrap}
+@media (max-width:560px){ .plancard{max-width:calc(100% - 20px);bottom:56px} }
+.lg.on{border-color:#d62f2f;background:rgba(214,47,47,.14)}
+.fpbtn{justify-content:center}

@@ -255,6 +255,7 @@ svg.robefig .rpart:hover{filter:brightness(1.5) drop-shadow(0 0 4px rgba(217,164
   <div class="tstage" id="tstage" data-mode="plan">
     <div class="tview tplan" id="tplan">
       <div class="planwrap"></div>
+      <div class="plancard" id="plancard" hidden></div>
       <p class="scenehint">뜰을 누르면 그 자리에 들어가 봅니다 · 두 손가락으로 확대</p>
       <div class="rotbar"><button id="pzout" title="축소">−</button><button id="pzreset" title="전체">⌂</button><button id="pzin" title="확대">+</button></div>
     </div>
@@ -278,7 +279,7 @@ svg.robefig .rpart:hover{filter:brightness(1.5) drop-shadow(0 0 4px rgba(217,164
   <div class="glist" id="tglist"></div>
 </div>
 
-<div id="pane-tab">
+<div id="pane-tab" hidden>
 <div class="scenebox">
   <svg id="scene" viewBox="0 0 760 640" preserveAspectRatio="xMidYMid meet" aria-label="성막 조감도"></svg>
   <p class="scenehint">드래그로 회전 · 누르면 들어갑니다</p>
@@ -955,7 +956,7 @@ function renderItem(){
   let inner='';
   if(k==='holy') inner=`<div class="interior"><div class="ihead">성소 안 — 기구를 누르세요</div>${interiorSVG('holy')}</div>`;
   if(k==='mhk')  inner=`<div class="interior"><div class="ihead">지성소 안 — 기구를 누르세요</div>${interiorSVG('mhk')}</div>`;
-  if(it.t && window.TempleUI) inner=TempleUI.innerFor(k);
+  if(it.t && window.TempleUI){ const d=TempleUI.innerFor(k); if(d) inner=d; }
   const crumb=stack.map((s,i)=>`<span class="cb${i===stack.length-1?' on':''}" data-i="${i}">${ITEMS[s].name}</span>`).join('<i>›</i>');
   const rows=[]; if(it.size) rows.push(['규격',it.size]); if(it.material) rows.push(['재료',it.material]);
   const story=it.zone==='역사'||it.zone==='해석';
@@ -969,13 +970,13 @@ function renderItem(){
     </div>
     <div class="crumbs">${crumb}</div>
     ${inner}
-    ${it.fp?`<div class="fpwrap"><button class="fpbtn" id="mfp"><span>👁</span><b>이 자리에 서서 보기</b><em>1인칭</em></button></div>`:''}
+    ${it.fp?`<div class="fpwrap"><button class="fpbtn" id="mfp"><b>1인칭 시점으로 보기</b></button></div>`:''}
     <div class="mbody">
       ${rows.length?sec('규격 · 재료',kv(rows)):''}
       ${it.use?sec(story?'내용':'쓰임',`<p>${it.use}</p>`):''}
       ${it.meaning?sec(story?'의미':'신앙적 의미',`<p>${it.meaning}</p>`):''}
       ${(it.more||[]).map(([l,t])=>sec(l,`<p>${t}</p>`)).join('')}
-      ${it.type&&!it.t?sec('그리스도의 예표',`<p class="tp">${it.type}</p>`):''}
+      ${it.type&&(!it.t||it.t==='tab')?sec('그리스도의 예표',`<p class="tp">${it.type}</p>`):''}
       ${it.note?sec('참고',`<p class="note">${it.note}</p>`):''}
       ${scriptureBlock(k,'T')}
     </div>`;
