@@ -307,7 +307,12 @@ function terrain(root,hfn,size=7000,seg=190){
     const rk=sstep(.08,.3,slope); r=r*(1-rk)+.78*rk; gg=gg*(1-rk)+.72*rk; b=b*(1-rk)+.62*rk;
     col[i*3]=r; col[i*3+1]=gg; col[i*3+2]=b; }
   g.setAttribute('color',new THREE.BufferAttribute(col,3));
-  const m=new THREE.Mesh(g,M.ground); m.receiveShadow=true; m.matrixAutoUpdate=false; m.updateMatrix(); root.add(m); return m; }
+  const m=new THREE.Mesh(g,M.ground); m.receiveShadow=true; m.matrixAutoUpdate=false; m.updateMatrix(); root.add(m);
+  // 실제로 그려진 땅(삼각형 면) 높이를 돌려주는 함수 — 나무·집·천막이 뜨거나 묻히지 않게
+  const n1=seg+1, cs=size/seg, H=new Float32Array(n1*n1); for(let i=0;i<p.count;i++) H[i]=p.getY(i);
+  return (x,z)=>{ const fx=(x+size/2)/cs, fz=(z+size/2)/cs; const ix=Math.min(seg-1,Math.max(0,Math.floor(fx))), iz=Math.min(seg-1,Math.max(0,Math.floor(fz)));
+    const u=fx-ix, v=fz-iz, ha=H[iz*n1+ix], hb=H[(iz+1)*n1+ix], hc=H[(iz+1)*n1+ix+1], hd=H[iz*n1+ix+1];
+    return u+v<=1 ? ha+(hd-ha)*u+(hb-ha)*v : hc+(hb-hc)*(1-u)+(hd-hc)*(1-v); }; }
 function city(B,R,hfn,n,x0,x1,z0,z1,ok){
   for(let i=0;i<n;i++){ const x=x0+R()*(x1-x0), z=z0+R()*(z1-z0); if(ok&&!ok(x,z)) continue;
     const y=hfn(x,z), w=7+R()*10, d=7+R()*10, h=5+R()*6, m=R()<.5?'house':'house2';
@@ -328,8 +333,8 @@ function buildSolomon(ctx){
     h-=35*Math.exp(-1*((x+260)/70)**2);                    // 서쪽 골짜기
     h-=.09*Math.max(0,z-160);                            // 다윗 성으로 내려가는 남쪽 비탈
     return h; };
-  const hfn=flatten(base,[-130,250,-140,140],-3,70);
-  terrain(root,hfn);
+  const hfn0=flatten(base,[-130,250,-140,140],-3,70);
+  const hfn=terrain(root,hfn0);
   // ── 큰 뜰 ──
   B.bx(-110,230,-3,0,-120,120,'pave','s_outer',{walk:true});
   wallX(B,-113,233,-121.5,3,0,10,'stone',null,[[50,70,null]]); wallX(B,-113,233,121.5,3,0,10,'stone',null,[[50,70,null]]);
@@ -479,8 +484,8 @@ function buildHerod(ctx){
     h-= .1*Math.max(0,z-340);                                // 남쪽 오벨·다윗 성
     h+= 12*sstep(-300,-700,z);                               // 북쪽 베데스다 언덕
     return h; };
-  const hfn=flatten(base,[-205,305,-335,345],-46.4,90);
-  terrain(root,hfn);
+  const hfn0=flatten(base,[-205,305,-335,345],-46.4,90);
+  const hfn=terrain(root,hfn0);
   // ── 성전산 기단 ──
   B.bx(-200,300,-62,-.5,-260,300,'stoneH',null);
   B.bx(-200,300,-.5,0,-260,300,'pave','h_gentiles',{walk:true});
@@ -645,8 +650,8 @@ function buildEzekiel(ctx){
     h+=230*sstep(1900,3000,r)*(.55+fbm(x*.0012,z*.0012,3));
     const w=16+Math.max(0,x-250)*.06; h-=16*Math.exp(-1*((z-riverZ(x))/w)**2)*sstep(250,330,x);
     return h; };
-  const hfn=flatten(base,[-275,275,-275,275],-3.75,60);
-  terrain(root,hfn);
+  const hfn0=flatten(base,[-275,275,-275,275],-3.75,60);
+  const hfn=terrain(root,hfn0);
   // ── 바깥뜰 ──
   B.bx(-250,250,-3.5,-.8,-250,250,'stoneDk',null);
   B.bx(-200,200,-.8,0,-200,200,'paveW','e_oc',{walk:true});
@@ -793,8 +798,8 @@ function buildTabernacle(ctx){
     h+=420*sstep(1500,2700,r)*(.45+fbm(x*.0016,z*.0016,3));
     h+=760*Math.exp(-1*(((x+1700)/450)**2+((z+250)/420)**2));          // 시내 산 (서쪽)
     return h; };
-  const hfn=flatten(base,[-430,430,-430,430],-.4,220);
-  terrain(root,hfn);
+  const hfn0=flatten(base,[-430,430,-430,430],-.4,220);
+  const hfn=terrain(root,hfn0);
   // 진영 바닥 · 뜰 바닥
   B.bx(-140,160,-1,-.1,-90,90,'sand',null,{walk:true});
   B.bx(-50,50,-.6,.12,-25,25,'sand','court',{walk:true});
@@ -973,7 +978,7 @@ export function orbitReset(){ if(!st.rec) return; const o=st.rec.orbit; st.orb.t
 const _pl=new THREE.Plane(new THREE.Vector3(0,1,0),0), _gp=new THREE.Vector3();
 function groundAt(cx,cy){ const r=canvas.getBoundingClientRect(); ndc.set(((cx-r.left)/r.width)*2-1,-((cy-r.top)/r.height)*2+1);
   ray.setFromCamera(ndc,camera); _pl.constant=-st.orb.tgt.y; return ray.ray.intersectPlane(_pl,_gp); }
-function clampTarget(){ const c=st.rec.center, R=st.rec.radius*1.5, dx=st.orb.tgt.x-c.x, dz=st.orb.tgt.z-c.z, l=Math.hypot(dx,dz);
+function clampTarget(){ const c=st.rec.center, R=st.rec.radius*3.2, dx=st.orb.tgt.x-c.x, dz=st.orb.tgt.z-c.z, l=Math.hypot(dx,dz);
   if(l>R){ st.orb.tgt.x=c.x+dx/l*R; st.orb.tgt.z=c.z+dz/l*R; } }
 function panOrbit(dx,dy){ const s=2*st.orb.d*Math.tan(camera.fov*Math.PI/360)/Math.max(1,canvas.clientHeight), th=st.orb.th;
   const k=1/Math.max(.35,Math.cos(st.orb.ph)*.6+.4);
@@ -981,6 +986,14 @@ function panOrbit(dx,dy){ const s=2*st.orb.d*Math.tan(camera.fov*Math.PI/360)/Ma
 function zoomOrbit(f,cx,cy){ const R0=st.rec.radius, nd=Math.max(R0*.05,Math.min(R0*4,st.orb.d*f)), real=nd/st.orb.d;
   if(cx!=null){ applyCam(); const g=groundAt(cx,cy); if(g){ st.orb.tgt.x+=(g.x-st.orb.tgt.x)*(1-real); st.orb.tgt.z+=(g.z-st.orb.tgt.z)*(1-real); clampTarget(); } }
   st.orb.d=nd; }
+// 1인칭에서 두 손가락으로 끌기 = 걷기 (아래로 끌면 앞으로, 옆으로 끌면 옆걸음)
+let walkZoneT=0;
+function walkPan(dx,dy){ const sp=.11*(st.fp.fov/62), y=st.fp.yaw, fx=-Math.sin(y), fz=-Math.cos(y), rx=Math.cos(y), rz=-Math.sin(y);
+  const P=st.fp.pos; const nx=P.x+(fx*dy-rx*dx)*sp, nz=P.z+(fz*dy-rz*dx)*sp;
+  ray.set(tmpV.set(nx,P.y+2.5,nz),new THREE.Vector3(0,-1,0)); ray.far=40; const h=ray.intersectObjects(st.rec.walk,false); ray.far=Infinity;
+  P.x=nx; P.z=nz; P.y=(h.length?h[0].point.y:st.rec.hfn(nx,nz))+EYE;
+  if(!st.shadowAt||st.shadowAt.distanceTo(P)>40){ fitShadow(P.clone(),160); st.shadowAt=P.clone(); }
+  const now=performance.now(); if(now-walkZoneT>250){ walkZoneT=now; setZone(); } }
 function zoomFP(f){ st.fp.fov=Math.max(24,Math.min(112,st.fp.fov*f)); }
 export function zoomStep(f){ if(!st.rec||st.anim) return;
   if(st.mode==='orbit'){ const r=canvas.getBoundingClientRect(); zoomOrbit(f,r.left+r.width/2,r.top+r.height/2); } else if(st.mode==='fp') zoomFP(f); }
@@ -995,23 +1008,26 @@ function tap(cx,cy){ if(st.anim) return; const r=canvas.getBoundingClientRect();
   if(o.userData.walk){ if(st.mode==='orbit') enterAt(h.point.x,h.point.z,h.point.y); else if(st.mode==='fp') walkTo(h.point); return; }
   if(o.userData.k) hooks.onPick&&hooks.onPick(o.userData.k); }
 
+// 이름표: 화면에 계속 떠 있던 것을 먼저 자리 잡게 하고(깜박임 방지), 새로 나타나는 것은 잠깐 겹치지 않을 때만 보이게 한다
 function updLabels(){
   const W=canvas.clientWidth, H=canvas.clientHeight, placed=[], list=[];
   const inside=st.mode!=='orbit' && st.rec.inside.includes(st.zone);
   for(const L of st.rec.labels){ let show=st.mode==='orbit'?L.o:L.f;
     if(st.mode!=='orbit' && !!L.room!==inside) show=false;
     if(st.mode==='fly') show=false;
-    if(!show){ if(L.el.style.display!=='none') L.el.style.display='none'; continue; }
-    tmpV.copy(L.p).project(camera);
-    if(tmpV.z>1||tmpV.z<-1||Math.abs(tmpV.x)>1.02||Math.abs(tmpV.y)>1.02){ L.el.style.display='none'; continue; }
-    const dist=camera.position.distanceTo(L.p); if(st.mode==='fp'&&dist>(L.room?60:420)){ L.el.style.display='none'; continue; }
-    list.push({L,x:(tmpV.x+1)/2*W,y:(1-tmpV.y)/2*H,dist}); }
-  list.sort((a,b)=>a.dist-b.dist);
-  for(const it of list){ const L=it.L; if(L.el.style.display==='none'){ L.el.style.display=''; }
-    if(!L.w) L.w=(L.el.firstChild&&L.el.firstChild.offsetWidth)||80; const w=L.w, h=30;
-    const rc=[it.x-w/2-3,it.y-h-18,it.x+w/2+3,it.y];
-    if(placed.some(p=>!(rc[2]<p[0]||rc[0]>p[2]||rc[3]<p[1]||rc[1]>p[3]))){ L.el.style.display='none'; continue; }
-    placed.push(rc); L.el.style.transform=`translate(${it.x.toFixed(1)}px,${it.y.toFixed(1)}px)`; }
+    if(show){ tmpV.copy(L.p).project(camera);
+      if(tmpV.z>1||tmpV.z<-1||Math.abs(tmpV.x)>1.02||Math.abs(tmpV.y)>1.02) show=false;
+      else { const dist=camera.position.distanceTo(L.p); if(st.mode==='fp'&&dist>(L.room?60:420)) show=false;
+        else list.push({L,x:Math.round((tmpV.x+1)/2*W),y:Math.round((1-tmpV.y)/2*H),dist}); } }
+    if(!show){ if(L.vis){ L.vis=false; L.el.style.display='none'; } } }
+  list.sort((a,b)=>(b.L.vis-a.L.vis)||(a.dist-b.dist));
+  for(const it of list){ const L=it.L;
+    if(!L.w){ L.el.style.display=''; L.w=(L.el.firstChild&&L.el.firstChild.offsetWidth)||80; if(!L.vis) L.el.style.display='none'; }
+    const w=L.w, h=30, rc=[it.x-w/2-4,it.y-h-18,it.x+w/2+4,it.y];
+    const hit=placed.some(p=>!(rc[2]<p[0]||rc[0]>p[2]||rc[3]<p[1]||rc[1]>p[3]));
+    if(hit){ L.blockT=performance.now(); if(L.vis){ L.vis=false; L.el.style.display='none'; } continue; }
+    if(!L.vis){ if(L.blockT&&performance.now()-L.blockT<250) continue; L.vis=true; L.el.style.display=''; }
+    placed.push(rc); const tr=`translate(${it.x}px,${it.y}px)`; if(L.tr!==tr){ L.el.style.transform=tr; L.tr=tr; } }
 }
 function loop(t){
   if(!st.visible){ raf=null; return; } raf=requestAnimationFrame(loop);
@@ -1048,10 +1064,11 @@ export function init(container,hk){
   const pts=()=>[...ptrs.values()];
   const dist2=()=>{ const a=pts(); return Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y); };
   const mid=()=>{ const a=pts(); return [(a[0].x+a[1].x)/2,(a[0].y+a[1].y)/2]; };
+  const ang2=()=>{ const a=pts(); return Math.atan2(a[1].y-a[0].y,a[1].x-a[0].x); };
   canvas.addEventListener('pointerdown',e=>{ try{canvas.setPointerCapture(e.pointerId);}catch(_){}
     ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(ptrs.size===1) down={x:e.clientX,y:e.clientY,t:performance.now(),moved:false,pan:e.button===2||e.shiftKey||e.ctrlKey};
-    if(ptrs.size===2){ const m=mid(); pinch={d:dist2(),mx:m[0],my:m[1]}; if(down) down.moved=true; } });
+    if(ptrs.size===2){ const m=mid(); pinch={d:dist2(),mx:m[0],my:m[1],a:ang2()}; if(down) down.moved=true; } });
   canvas.addEventListener('pointermove',e=>{ const p=ptrs.get(e.pointerId); if(!p) return; e.preventDefault();
     const dx=e.clientX-p.x, dy=e.clientY-p.y; p.x=e.clientX; p.y=e.clientY;
     if(st.anim) return;
@@ -1059,10 +1076,11 @@ export function init(container,hk){
       if(!down.moved) return;
       if(st.mode==='orbit'){ if(down.pan) panOrbit(dx,dy); else { st.orb.th-=dx*.006; st.orb.ph=Math.max(.08,Math.min(1.54,st.orb.ph-dy*.005)); } }
       else if(st.mode==='fp'){ const s=st.fp.fov/62; st.fp.yaw+=dx*.0045*s; st.fp.pitch=Math.max(-.85,Math.min(.95,st.fp.pitch+dy*.0045*s)); } }
-    else if(ptrs.size===2&&pinch){ const d=Math.max(10,dist2()), f=pinch.d/d, m=mid();
-      if(st.mode==='orbit'){ zoomOrbit(f,m[0],m[1]); panOrbit(m[0]-pinch.mx,m[1]-pinch.my); }
-      else if(st.mode==='fp') zoomFP(f);
-      pinch.d=d; pinch.mx=m[0]; pinch.my=m[1]; } },{passive:false});
+    else if(ptrs.size===2&&pinch){ const d=Math.max(10,dist2()), f=pinch.d/d, m=mid(), an=ang2();
+      let da=an-pinch.a; if(da>Math.PI) da-=Math.PI*2; if(da<-Math.PI) da+=Math.PI*2;
+      if(st.mode==='orbit'){ zoomOrbit(f,m[0],m[1]); panOrbit(m[0]-pinch.mx,m[1]-pinch.my); st.orb.th-=da; }   // 두 손가락: 확대·옮기기·비틀어 돌리기
+      else if(st.mode==='fp'){ zoomFP(f); walkPan(m[0]-pinch.mx,m[1]-pinch.my); st.fp.yaw-=da; }           // 1인칭: 두 손가락으로 끌면 걸어서 이동
+      pinch.d=d; pinch.mx=m[0]; pinch.my=m[1]; pinch.a=an; } },{passive:false});
   const up=e=>{ const had=ptrs.has(e.pointerId); ptrs.delete(e.pointerId); if(ptrs.size<2) pinch=null;
     if(had&&ptrs.size===0&&down&&!down.moved&&performance.now()-down.t<550) tap(e.clientX,e.clientY);
     if(ptrs.size===0) down=null; };

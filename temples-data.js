@@ -197,13 +197,13 @@ s_h12:{ t:"solomon", cls:"z-hist", zone:"역사", era:"B.C. 586", name:"바벨�
   refs:["왕하25:8-9","왕하25:13","대하36:19"] },
 
 // ━━━━━━━━━━━━━━━━━━━━ 헤롯 성전 ━━━━━━━━━━━━━━━━━━━━
-h_temple:{ t:"herod", cls:"z-court", zone:"개관", name:"헤롯 성전 (제2성전)", en:"HEROD'S TEMPLE",
+h_temple:{ t:"herod", cls:"z-court", zone:"개관", name:"스룹바벨 성전 (제2성전 · 헤롯 성전)", en:"THE SECOND TEMPLE",
   size:"성전산 약 480m × 300m · 성전 본채 높이·너비 100규빗 (요세푸스·미쉬나 기록)",
   material:"흰 돌과 대리석, 금판 · 성전산을 받친 거대한 돌 축대 (가장 큰 돌은 수백 톤)",
   use:"포로에서 돌아온 백성이 스룹바벨의 지휘로 다시 지은 제2성전을, 헤롯 대왕이 B.C. 20/19년부터 크게 넓혀 새로 단장했다. 예수님 당시에도 공사가 계속되어 “46년 동안 지었다”는 말이 나왔고, A.D. 63년경 완공되었다가 7년 만인 A.D. 70년 로마군에게 무너졌다.",
   meaning:"예수님이 아기로 드려지시고, 열두 살에 선생들과 문답하시고, 가르치시고, 장사꾼을 내쫓으신 바로 그 성전이다. 겉으로는 가장 화려했지만 “돌 하나도 돌 위에 남지 않으리라” 하신 말씀대로 되었다.",
   type:"“성전보다 더 큰 이가 여기 있느니라” — 참 성전이신 그리스도.",
-  refs:["요2:20","마24:1-2","마12:6"], kw:"헤롯 제2성전 예루살렘성전", note:"성전산과 뜰의 배치는 성경 밖 기록(요세푸스, 미쉬나 미돗 편)과 발굴에 근거한 복원이다." },
+  refs:["스6:15","요2:20","마24:1-2","마12:6"], kw:"헤롯 스룹바벨 제2성전 예루살렘성전", note:"성전산과 뜰의 배치는 성경 밖 기록(요세푸스, 미쉬나 미돗 편)과 발굴에 근거한 복원이다." },
 
 h_gentiles:{ t:"herod", cls:"z-out", zone:"성전산", name:"이방인의 뜰", en:"COURT OF THE GENTILES", fp:"gentiles",
   size:"성전산의 대부분을 차지하는 가장 넓은 뜰", material:"돌 포장 · 사방에 기둥 행각",
@@ -621,7 +621,7 @@ solomon:{ title:"솔로몬 성전", glow:"성전", sub:"Solomon's Temple · 열�
   legend:[["1","s_outer"],["2","s_inner"],["3","s_gate"],["4","s_altar"],["5","s_sea"],["6","s_carts"],["7","s_pillars"],["8","s_porch"],["9","s_holy"],["10","s_mhk"],["11","s_side"],["12","s_lamps"],["13","s_tables"],["14","s_incense"],["15","s_doors"],["16","s_cherubim"],["17","s_ark"]]
 },
 
-herod:{ title:"헤롯 성전", glow:"성전", sub:"Herod's Temple · 예수님 당시의 예루살렘 성전",
+herod:{ title:"스룹바벨 성전", glow:"성전", sub:"Second Temple · 스룹바벨이 짓고 헤롯이 넓힌 예수님 당시의 성전",
   intro:"h_temple", histTitle:"제2성전의 역사", histSub:"스룹바벨의 재건부터 A.D. 70년까지", hist:["h_h1","h_h2","h_h3","h_h4","h_h5","h_h6","h_h7","h_h8","h_h9","h_h10","h_h11"],
   groups:[ {z:"개관",cls:"z-court",keys:["h_temple"]},
     {z:"성전산 (이방인의 뜰)",cls:"z-out",keys:["h_gentiles","h_royal","h_solomon","h_pinnacle","h_antonia","h_hulda","h_soreg"]},
@@ -629,7 +629,7 @@ herod:{ title:"헤롯 성전", glow:"성전", sub:"Herod's Temple · 예수님 �
     {z:"안뜰",cls:"z-court",keys:["h_israel","h_priests","h_altar","h_laver","h_slaughter"]},
     {z:"성소",cls:"z-holy",keys:["h_porch","h_house","h_holy","h_lamp","h_table","h_incense","h_veil"]},
     {z:"지성소",cls:"z-mhk",keys:["h_mhk"]} ],
-  planNote:"성전산과 뜰의 배치는 요세푸스와 미쉬나(미돗 편)의 기록, 그리고 발굴 결과를 바탕으로 한 복원입니다. 성전산의 실제 모양은 약간 찌그러진 사다리꼴입니다.",
+  planNote:"스룹바벨이 지은 제2성전을 헤롯이 크게 넓힌 뒤, 곧 예수님 당시의 모습입니다. 성전산과 뜰의 배치는 요세푸스와 미쉬나(미돗 편)의 기록, 그리고 발굴 결과를 바탕으로 한 복원입니다. 성전산의 실제 모양은 약간 찌그러진 사다리꼴입니다.",
   plan:{ b:[-212,348,-345,352], fs:12, els:[
     {t:"a",r:[-200,300,-260,300],k:"h_gentiles",fp:1},
     {t:"b",r:[-200,300,258,300],k:"h_royal",f:"#e4dccb"},{t:"b",r:[270,300,-235,258],k:"h_solomon",f:"#e4dccb"},
